@@ -15,14 +15,28 @@
 
 			let camera, scene, renderer;
 			let mesh;
+			let layout;
 
-			import * as dataLayout from './layout.json';
-			const layout = dataLayout;
+			layout = readJson('layout.json');
 			console.log(layout);
 
 
 			init();
 			animate();
+
+			function readJson(file) {
+				var jObject;
+				var req = new XMLHttpRequest();
+				req.open("GET", "./layout.json", false);
+				req.onreadystatechange = function () {
+					if (req.readyState === 4) {
+						jObject = JSON.parse(req.responseText);
+						console.log("Loaded Json: '"+file+"'");
+					}
+				}
+				req.send();
+				return jObject;
+			}
 
 			function init() {
 
