@@ -4,12 +4,14 @@
 		<title>Projet final de WebGL</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
 	</head>
 	<body>
 
 		<script type="module">
 
 			import * as THREE from '../build/three.module.js';
+// 			import {OrbitControls} from "../examples/jsm/controls/OrbitControls.js";
 
 			let camera, scene, renderer;
 			let mesh;
@@ -19,17 +21,19 @@
 
 			function init() {
 
-				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
+// 			    startOrbitControls();
+
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
 				camera.position.z = 400;
 
 				scene = new THREE.Scene();
+
+				scene.background = new THREE.TextureLoader().load('./textures/red_sky.jpg');
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				document.body.appendChild( renderer.domElement );
-
-				//
 
 				window.addEventListener( 'resize', onWindowResize );
 
@@ -51,6 +55,14 @@
 				renderer.render( scene, camera );
 
 			}
+
+// 			function startOrbitControls(){
+//                 const controls = new OrbitControls(camera, renderer.domElement);
+//                 controls.minDistance = 10;
+//                 controls.maxDistance = 2000;
+//                 controls.enablePan = false;
+//                 controls.maxPolarAngle = 85 * Math.PI / 180;
+//             }
 
 		</script>
 
