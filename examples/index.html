@@ -50,11 +50,11 @@
 				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 5000 );
 
 
-				camera.position.x = layout.start[1]*(wall_size)+0.5*wall_size;
+                camera.position.x = layout.start[0]*wall_size-2*wall_size;
 				camera.position.y = 180;
-				camera.position.z = layout.start[0]*wall_size-2*wall_size;
+                camera.position.z = layout.start[1]*(wall_size)+0.5*wall_size;
 
-				camera.rotation.set(0, Math.PI, 0);
+				camera.rotation.set(0, -Math.PI/2, 0);
 
 				console.log(camera.position.x, camera.position.z);
 
@@ -132,9 +132,9 @@
 	                        let wall = new THREE.Mesh(wall_geometry, wall_material);
                             wall.receiveShadow = true;
                             wall.castShadow = true;
-                            wall.position.x = (i+.5)*wall_size;
+                            wall.position.x = (j+.5)*wall_size;
                             wall.position.y = wall_size/2;
-                            wall.position.z = (j+.5)*wall_size;
+                            wall.position.z = (i+.5)*wall_size;
                             layout.layout[i][j] = wall;
                             scene.add(layout.layout[i][j]);
 
