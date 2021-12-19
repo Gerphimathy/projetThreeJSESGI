@@ -48,7 +48,15 @@
 // 			    startOrbitControls();
 
 				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 5000 );
-				camera.position.z = 400;
+
+
+				camera.position.x = layout.start[1]*(wall_size)+0.5*wall_size;
+				camera.position.y = 180;
+				camera.position.z = layout.start[0]*wall_size-2*wall_size;
+
+				camera.rotation.set(0, Math.PI, 0);
+
+				console.log(camera.position.x, camera.position.z);
 
 				scene = new THREE.Scene();
 				scene.background = new THREE.TextureLoader().load('./textures/red_sky.jpg');
@@ -102,7 +110,7 @@
 
                 for(i = 0; i < layout.height; i++){
                     for(j = 0; j < layout.width; j++){
-                        if(layout.layout[i][j]){
+                        if(layout.layout[i][j] === 1){
                             const wall_text = new THREE.TextureLoader().load('./textures/crying_obsidian.png');
                             const wall_material = new THREE.MeshPhongMaterial({map:wall_text});
                             const wall_geometry = new THREE.BoxGeometry(wall_size,wall_size,wall_size);
