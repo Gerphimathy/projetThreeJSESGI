@@ -11,10 +11,12 @@
 		<script type="module">
 
 			import * as THREE from '../build/three.module.js';
+            import {DoomControls} from './doomControls.js';
 // 			import {OrbitControls} from "../examples/jsm/controls/OrbitControls.js";
 
 			let camera, scene, renderer;
 			let mesh;
+            let doomControls;
 
 			init();
 			animate();
@@ -27,15 +29,18 @@
 				camera.position.z = 400;
 
 				scene = new THREE.Scene();
-
 				scene.background = new THREE.TextureLoader().load('./textures/red_sky.jpg');
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
 
+
+				document.body.appendChild( renderer.domElement );
+                doomControls = new DoomControls(camera);
 				window.addEventListener( 'resize', onWindowResize );
+
+
 
 			}
 
@@ -51,7 +56,8 @@
 			function animate() {
 
 				requestAnimationFrame( animate );
-
+                console.log(camera.position);
+                doomControls.update();
 				renderer.render( scene, camera );
 
 			}
