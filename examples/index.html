@@ -7,17 +7,18 @@
 		<link type="text/css" rel="stylesheet" href="main.css">
 	</head>
 	<body>
-
+		<div id="container"></div>
 		<script type="module">
 
 			import * as THREE from '../build/three.module.js';
             import {DoomControls} from './doomControls.js';
 // 			import {OrbitControls} from "../examples/jsm/controls/OrbitControls.js";
+			import Stats from "./jsm/libs/stats.module.js";
 
 			let camera, scene, renderer;
-			let mesh;
 			let layout;
             let doomControls;
+            let stats;
 
 			layout = readJson('layout.json');
 			console.log(layout);
@@ -53,11 +54,17 @@
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
+                renderer.setAnimationLoop(animate);
 
+                stats = new Stats();
 
 				document.body.appendChild( renderer.domElement );
+                document.getElementById("container").appendChild(stats.dom);
                 doomControls = new DoomControls(camera);
 				window.addEventListener( 'resize', onWindowResize );
+
+
+                generateLabyrinth();
 
 
 
@@ -73,12 +80,13 @@
 			}
 
 			function animate() {
+                stats.begin();
 
-				requestAnimationFrame( animate );
                 console.log(camera.position);
                 doomControls.update();
 				renderer.render( scene, camera );
 
+                stats.end();
 			}
 
 // 			function startOrbitControls(){
@@ -88,6 +96,10 @@
 //                 controls.enablePan = false;
 //                 controls.maxPolarAngle = 85 * Math.PI / 180;
 //             }
+
+			function generateLabyrinth(){
+
+			}
 
 		</script>
 
