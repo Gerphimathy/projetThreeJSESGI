@@ -47,16 +47,8 @@
 
 // 			    startOrbitControls();
 
-				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 5000 );
+				generateCamera();
 
-
-                camera.position.x = layout.start[0]*wall_size-2*wall_size;
-				camera.position.y = 180;
-                camera.position.z = layout.start[1]*(wall_size)+0.5*wall_size;
-
-				camera.rotation.set(0, -Math.PI/2, 0);
-
-				console.log(camera.position.x, camera.position.z);
 
 				scene = new THREE.Scene();
 				scene.background = new THREE.TextureLoader().load('./textures/red_sky.jpg');
@@ -71,6 +63,7 @@
 				document.body.appendChild( renderer.domElement );
                 document.getElementById("container").appendChild(stats.dom);
                 doomControls = new DoomControls(camera);
+                doomControls.canFly = false;
 				window.addEventListener( 'resize', onWindowResize );
 
 				generateGround();
@@ -104,6 +97,16 @@
 //                 controls.enablePan = false;
 //                 controls.maxPolarAngle = 85 * Math.PI / 180;
 //             }
+
+			function generateCamera(){
+                camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 5000 );
+                
+                camera.position.x = layout.start[0]*wall_size-2*wall_size;
+                camera.position.y = 180;
+                camera.position.z = layout.start[1]*(wall_size)+0.5*wall_size;
+
+                camera.rotation.set(0, -Math.PI/2, 0);
+			}
 
 			function generateGround(){
 				const ground_text = new THREE.TextureLoader().load('./textures/ground.jpg');
