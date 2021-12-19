@@ -19,6 +19,7 @@
 			let layout;
             let doomControls;
             let stats;
+            let wall_size = 100; // Unit : cm
 
 			layout = readJson('layout.json');
 			console.log(layout);
@@ -45,7 +46,7 @@
 
 // 			    startOrbitControls();
 
-				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 5000 );
 				camera.position.z = 400;
 
 				scene = new THREE.Scene();
@@ -81,11 +82,8 @@
 
 			function animate() {
                 stats.begin();
-
-                console.log(camera.position);
                 doomControls.update();
 				renderer.render( scene, camera );
-
                 stats.end();
 			}
 
@@ -98,6 +96,27 @@
 //             }
 
 			function generateLabyrinth(){
+                let i, j;
+
+                for(i = 0; i < layout.height; i++){
+                    for(j = 0; j < layout.width; j++){
+                        if(layout.layout[i][j]){
+                            const wall_text = new THREE.TextureLoader().load('./textures/crying_obsidian.png');
+                            const wall_material = new THREE.MeshPhongMaterial({map:wall_text});
+                            const wall_geometry = new THREE.BoxGeometry(wall_size,wall_size,wall_size);
+	                        let wall = new THREE.Mesh(wall_geometry, wall_material);
+                            wall.receiveShadow = true;
+                            wall.castShadow = true;
+                            wall.position.x = (i+.5)*wall_size;
+                            wall.position.y = wall_size/2;
+                            wall.position.z = (j+.5)*wall_size;
+                            layout.layout[i][j] = wall;
+                            scene.add(layout.layout[i][j]);
+
+
+                        }
+                    }
+                }
 
 			}
 
