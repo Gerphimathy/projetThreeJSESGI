@@ -19,7 +19,8 @@
 			let layout;
             let doomControls;
             let stats;
-            let wall_size = 100; // Unit : cm
+            let wall_size = 200; // Unit : cm
+			let ambient_light;
 
 			layout = readJson('layout.json');
 			console.log(layout);
@@ -66,6 +67,7 @@
 
 
                 generateLabyrinth();
+                generateLights();
 
 
 
@@ -119,6 +121,11 @@
                 }
 
 			}
+
+            function generateLights(){
+                ambient_light = new THREE.AmbientLight(0xB52020, 0.4);
+                scene.add(ambient_light);
+            }
 
 		</script>
 
