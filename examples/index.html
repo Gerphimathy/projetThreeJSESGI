@@ -52,6 +52,7 @@
 
 				scene = new THREE.Scene();
 				scene.background = new THREE.TextureLoader().load('./textures/red_sky.jpg');
+				scene.fog = new THREE.Fog(new THREE.Color(0xdd0000), 0.25, wall_size*6);
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
@@ -90,13 +91,16 @@
                 stats.end();
 			}
 
-// 			function startOrbitControls(){
-//                 const controls = new OrbitControls(camera, renderer.domElement);
-//                 controls.minDistance = 10;
-//                 controls.maxDistance = 2000;
-//                 controls.enablePan = false;
-//                 controls.maxPolarAngle = 85 * Math.PI / 180;
-//             }
+/*
+ 			function startOrbitControls(){
+				const controls = new OrbitControls(camera, renderer.domElement);
+                controls.minDistance = 10;
+                controls.maxDistance = 2000;
+                controls.enablePan = false;
+                controls.maxPolarAngle = 85 * Math.PI / 180;
+            }
+*/
+
 
 			function generateCamera(){
                 camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 5000 );
