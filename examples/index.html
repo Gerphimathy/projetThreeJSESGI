@@ -66,6 +66,7 @@
                 document.getElementById("container").appendChild(stats.dom);
                 doomControls = new DoomControls(camera);
                 doomControls.canFly = false;
+				doomControls.canLookUpDown = false;
 				window.addEventListener( 'resize', onWindowResize );
 
 				generateGround();
