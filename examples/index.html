@@ -21,6 +21,7 @@
             let stats;
             let wall_size = 200; // Unit : cm
 			let ambient_light;
+			let walls = [];
 
 			const cameraHeight = 180;
 
@@ -65,6 +66,7 @@
 				document.body.appendChild( renderer.domElement );
                 document.getElementById("container").appendChild(stats.dom);
                 doomControls = new DoomControls(camera);
+				doomControls.canBarrelroll = false;
                 doomControls.canFly = false;
 				doomControls.canLookUpDown = false;
 				window.addEventListener( 'resize', onWindowResize );
@@ -89,17 +91,21 @@
 			function animate() {
                 stats.begin();
 				if (camera.position.y!==cameraHeight) camera.position.y = cameraHeight;
-				checkProximity();
+				let tempPos = [camera.position.x, camera.position.z];
                 doomControls.update();
+				checkProximity(tempPos);
 				renderer.render( scene, camera );
                 stats.end();
 			}
 
-			function checkProximity(){
-				let ray = new THREE.Raycaster();
-				for (let x = 0; x <= 1; x++){
-					for (let z = 0; z <= 1; z++){
-						
+			function checkProximity(preMovePosition){
+				for (let x = -1; x <= 1; x++){
+					for (let z = -1; z <= 1; z++){
+						let ray = new THREE.Raycaster(camera.position, new THREE.Vector3(x,0,z));
+						let proximityCheckResults = ray.intersectObjects(walls);
+						if (proximityCheckResults.length>0 && proximityCheckResults[0].distance<=10) {
+							camera.position.set(preMovePosition[0], cameraHeight, preMovePosition[1]);
+						}
 					}
 				}
 			}
@@ -154,7 +160,7 @@
                             wall.position.z = (i+.5)*wall_size;
                             layout.layout[i][j] = wall;
                             scene.add(layout.layout[i][j]);
-
+							walls.push(wall);
 
                         }
                     }
