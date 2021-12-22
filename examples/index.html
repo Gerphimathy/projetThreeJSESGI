@@ -8,10 +8,10 @@
 	</head>
 	<body>
 		<div id="container"></div>
+		<script src="../build/ammo.js"></script>
 		<script type="module">
 
 			import * as THREE from '../build/three.module.js';
-			import * as Ammo from '../build/ammo.js';
             import {DoomControls} from './doomControls.js';
 // 			import {OrbitControls} from "../examples/jsm/controls/OrbitControls.js";
 			import Stats from "./jsm/libs/stats.module.js";
@@ -23,6 +23,9 @@
             let wall_size = 200; // Unit : cm
 			let ambient_light;
 			let physics;
+			let invCameraStandin;
+
+			let rigidBodies = [], tmpTrans;
 
 
 			const cameraHeight = 180;
@@ -40,9 +43,13 @@
 				physics = new Ammo.btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
 				physics.setGravity(new Ammo.btVector3(0, -10, 0));
 
+				tmpTrans = new Ammo.btTransform();
+
 
 				init();
 				animate();
+
+
 			} );
 
 			function readJson(file) {
@@ -63,11 +70,12 @@
 
 // 			    startOrbitControls();
 
+				scene = new THREE.Scene();
+				scene.background = new THREE.TextureLoader().load('./textures/red_sky.jpg');
+
 				generateCamera();
 
 
-				scene = new THREE.Scene();
-				scene.background = new THREE.TextureLoader().load('./textures/red_sky.jpg');
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
@@ -78,7 +86,8 @@
 
 				document.body.appendChild( renderer.domElement );
                 document.getElementById("container").appendChild(stats.dom);
-                doomControls = new DoomControls(camera);
+				scene.add(invCameraStandin);
+                doomControls = new DoomControls(invCameraStandin);
                 doomControls.canFly = false;
 				doomControls.canLookUpDown= false;
 				window.addEventListener( 'resize', onWindowResize );
@@ -103,7 +112,16 @@
 
 			function animate() {
                 stats.begin();
-				if (camera.position.y!==cameraHeight) camera.position.y = cameraHeight;
+				if (invCameraStandin.position.y!==cameraHeight) invCameraStandin.position.y = cameraHeight;
+				camera.position.x = invCameraStandin.position.x;
+				camera.position.y = invCameraStandin.position.y;
+				camera.position.z = invCameraStandin.position.z;
+
+
+				camera.rotation.x = invCameraStandin.rotation.x;
+				camera.rotation.y = invCameraStandin.rotation.y;
+				camera.rotation.z = invCameraStandin.rotation.z;
+
                 doomControls.update();
 				renderer.render( scene, camera );
                 stats.end();
@@ -125,6 +143,39 @@
                 camera.position.z = layout.start[1]*(wall_size)+0.5*wall_size;
 
                 camera.rotation.set(0, -Math.PI/2, 0);
+
+				const invMat = new THREE.MeshBasicMaterial();
+				const invGeo = new THREE.BoxGeometry(wall_size*0.1, wall_size*0.1,wall_size*0.1);
+				invCameraStandin = new THREE.Mesh(invGeo, invMat);
+
+				invCameraStandin.position.x = camera.position.x;
+				invCameraStandin.position.y = camera.position.y;
+				invCameraStandin.position.z = camera.position.z;
+
+				invCameraStandin.rotation.set(0, -Math.PI/2, 0);
+
+				scene.add(invCameraStandin);
+
+				let transform = new Ammo.btTransform();
+				transform.setIdentity();
+				transform.setOrigin(new Ammo.btVector3(camera.position.x, camera.position.y, camera.position.z));
+				transform.setRotation( new Ammo.btQuaternion( camera.rotation.x, camera.rotation.y, camera.rotation.z, 1 ) );
+
+				let motionState = new Ammo.btDefaultMotionState( transform );
+				let colShape = new Ammo.btBoxShape( new Ammo.btVector3( wall_size * 0.1, wall_size * 0.1, wall_size * 0.1 ) );
+				colShape.setMargin( 0.05 );
+
+
+				let mass = 0;
+				let localInertia = new Ammo.btVector3( 0, 0, 0 );
+				colShape.calculateLocalInertia( mass, localInertia );
+
+
+				let rbInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, colShape, localInertia );
+				let body = new Ammo.btRigidBody( rbInfo );
+
+				physics.addRigidBody( body );
+
 			}
 
 			function generateGround(){
@@ -158,8 +209,28 @@
                             wall.position.y = wall_size/2;
                             wall.position.z = (i+.5)*wall_size;
                             layout.layout[i][j] = wall;
+
                             scene.add(layout.layout[i][j]);
 
+							let transform = new Ammo.btTransform();
+							transform.setIdentity();
+							transform.setOrigin(new Ammo.btVector3(wall.position.x, wall.position.y, wall.position.z));
+							transform.setRotation( new Ammo.btQuaternion( wall.rotation.x, wall.rotation.y, wall.rotation.z, 1 ) );
+
+							let motionState = new Ammo.btDefaultMotionState( transform );
+							let colShape = new Ammo.btBoxShape( new Ammo.btVector3( wall_size * 0.5, wall_size * 0.5, wall_size * 0.5 ) );
+							colShape.setMargin( 0.05 );
+
+
+							let mass = 0;
+							let localInertia = new Ammo.btVector3( 0, 0, 0 );
+							colShape.calculateLocalInertia( mass, localInertia );
+
+
+							let rbInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, colShape, localInertia );
+							let body = new Ammo.btRigidBody( rbInfo );
+
+							physics.addRigidBody( body );
 
                         }
                     }
