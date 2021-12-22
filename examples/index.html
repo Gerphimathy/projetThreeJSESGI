@@ -22,6 +22,8 @@
             let wall_size = 200; // Unit : cm
 			let ambient_light;
 
+			const cameraHeight = 180;
+
 			layout = readJson('layout.json');
 			console.log(layout);
 
@@ -85,6 +87,7 @@
 
 			function animate() {
                 stats.begin();
+				if (camera.position.y!==cameraHeight) camera.position.y = cameraHeight;
                 doomControls.update();
 				renderer.render( scene, camera );
                 stats.end();
@@ -102,7 +105,7 @@
                 camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 5000 );
                 
                 camera.position.x = layout.start[0]*wall_size-2*wall_size;
-                camera.position.y = 180;
+                camera.position.y = cameraHeight;
                 camera.position.z = layout.start[1]*(wall_size)+0.5*wall_size;
 
                 camera.rotation.set(0, -Math.PI/2, 0);
