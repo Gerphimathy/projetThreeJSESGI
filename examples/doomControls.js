@@ -16,6 +16,8 @@ export class DoomControls extends EventDispatcher{
         this.canFly = true;
         this.canLookUpDown = true;
 
+        this.rigidBody = false;
+
         this.moveSpeed = 4;
         this.rotateSpeed = Math.PI/100;
 
@@ -34,6 +36,9 @@ export class DoomControls extends EventDispatcher{
             "SPACE" : false,
             "SHIFT" : false
         }
+
+        this.status = status;
+
         function handleKeyDown(e){
             switch (e.code) {
                 //PERMET DE DEPLACER LA object DANS LE PLAN
@@ -79,7 +84,8 @@ export class DoomControls extends EventDispatcher{
                     status.SHIFT = true;
                     break;
             }
-        };
+            this.status = status;
+        }
         function handleKeyUp(e){
             switch (e.code) {
                 //PERMET DE DEPLACER LA object DANS LE PLAN
@@ -128,7 +134,8 @@ export class DoomControls extends EventDispatcher{
                     break;
 
             }
-        };
+            this.status = status;
+        }
 
         document.addEventListener("keydown",handleKeyDown);
         document.addEventListener("keyup",handleKeyUp);

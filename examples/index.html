@@ -24,6 +24,7 @@
 			let ambient_light;
 			let physics;
 			let invCameraStandin;
+			let clock;
 
 			let rigidBodies = [], tmpTrans;
 
@@ -75,7 +76,7 @@
 
 				generateCamera();
 
-
+				clock = new THREE.Clock();
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
@@ -90,6 +91,7 @@
                 doomControls = new DoomControls(invCameraStandin);
                 doomControls.canFly = false;
 				doomControls.canLookUpDown= false;
+				doomControls.rigidBody = true;
 				window.addEventListener( 'resize', onWindowResize );
 
 				generateGround();
@@ -99,7 +101,6 @@
 
 
 			}
-
 
 			function onWindowResize() {
 
@@ -111,7 +112,10 @@
 			}
 
 			function animate() {
-                stats.begin();
+				stats.begin();
+
+				updatePhysics(clock.getDelta());
+
 				if (invCameraStandin.position.y!==cameraHeight) invCameraStandin.position.y = cameraHeight;
 				camera.position.x = invCameraStandin.position.x;
 				camera.position.y = invCameraStandin.position.y;
@@ -122,7 +126,21 @@
 				camera.rotation.y = invCameraStandin.rotation.y;
 				camera.rotation.z = invCameraStandin.rotation.z;
 
-                doomControls.update();
+				if (doomControls.rigidBody === false) {
+					doomControls.update();
+				}else{
+					let moveX = 0, moveY = 0, moveZ = 0;
+					if (doomControls.status.W) moveZ++;
+					if (doomControls.status.S) moveZ--;
+
+					if (doomControls.status.A) moveX--;
+					if (doomControls.status.D) moveZ++;
+					let resultantImpulse = new Ammo.btVector3( moveX, moveY, moveZ )
+					resultantImpulse.op_mul(doomControls.moveSpeed);
+
+					let physicsBody = invCameraStandin.userData.physicsBody;
+					physicsBody.setLinearVelocity( resultantImpulse );
+				}
 				renderer.render( scene, camera );
                 stats.end();
 			}
@@ -175,7 +193,9 @@
 				let body = new Ammo.btRigidBody( rbInfo );
 
 				physics.addRigidBody( body );
+				invCameraStandin.userData.physicsBody = body;
 
+				rigidBodies.push(invCameraStandin);
 			}
 
 			function generateGround(){
@@ -231,6 +251,9 @@
 							let body = new Ammo.btRigidBody( rbInfo );
 
 							physics.addRigidBody( body );
+							wall.userData.physicsBody = body;
+
+							rigidBodies.push(wall);
 
                         }
                     }
@@ -243,6 +266,36 @@
                 scene.add(ambient_light);
             }
 
+			function updatePhysics(deltaTime){
+				physics.stepSimulation(deltaTime,10);
+				for (let i = 0; i < rigidBodies.length; i++){
+					let obj = rigidBodies[i];
+					let objAmmo = obj.userData.physicsBody;
+					let ms = objAmmo.getMotionState();
+					if (ms){
+						ms.getWorldTransform(tmpTrans);
+						let ori = tmpTrans.getOrigin();
+						let rot = tmpTrans.getRotation();
+						obj.position.set(ori.x(), ori.y(), ori.z());
+						obj.quaternion.set(rot.x(), rot.y(), rot.z(), rot.w());
+					}
+				}
+				detectCollisions();
+			}
+
+			function detectCollisions(){
+				let dispatcher = physics.getDispatcher();
+				let numManifolds = dispatcher.getNumManifolds();
+				for (let i = 0; i < numManifolds; i++){
+					let contactManifold = dispatcher.getManifoldByIndexInternal[i];
+					let numContacts = contactManifold.getNumContacts();
+					for (let j = 0; j < numContacts; j++){
+						let contactPoint = contactManifold.getContactPoint(j);
+						let distance = contactPoint.getDistance();
+						console.log({manifoldIndex: i, contactIndex: j, distance: distance});
+					}
+				}
+			}
 		</script>
 
 	</body>
