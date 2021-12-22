@@ -11,6 +11,7 @@
 		<script type="module">
 
 			import * as THREE from '../build/three.module.js';
+			import * as Ammo from '../build/ammo.js';
             import {DoomControls} from './doomControls.js';
 // 			import {OrbitControls} from "../examples/jsm/controls/OrbitControls.js";
 			import Stats from "./jsm/libs/stats.module.js";
@@ -21,15 +22,28 @@
             let stats;
             let wall_size = 200; // Unit : cm
 			let ambient_light;
+			let physics;
+
 
 			const cameraHeight = 180;
 
 			layout = readJson('layout.json');
 			console.log(layout);
 
+			Ammo().then( function(Ammo) {
 
-			init();
-			animate();
+				let collisionConfiguration  = new Ammo.btDefaultCollisionConfiguration(),
+						dispatcher              = new Ammo.btCollisionDispatcher(collisionConfiguration),
+						overlappingPairCache    = new Ammo.btDbvtBroadphase(),
+						solver                  = new Ammo.btSequentialImpulseConstraintSolver();
+
+				physics = new Ammo.btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
+				physics.setGravity(new Ammo.btVector3(0, -10, 0));
+
+
+				init();
+				animate();
+			} );
 
 			function readJson(file) {
 				var jObject;
@@ -66,6 +80,7 @@
                 document.getElementById("container").appendChild(stats.dom);
                 doomControls = new DoomControls(camera);
                 doomControls.canFly = false;
+				doomControls.canLookUpDown= false;
 				window.addEventListener( 'resize', onWindowResize );
 
 				generateGround();
@@ -75,6 +90,7 @@
 
 
 			}
+
 
 			function onWindowResize() {
 
