@@ -6,6 +6,9 @@
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<link type="text/css" rel="stylesheet" href="main.css">
 	</head>
+	<audio id="fire" preload="auto" style="display: none">
+		<source src="son/feu.mp3" type="audio/mpeg">
+	</audio>
 	<body>
 		<div id="container"></div>
 		<script type="module">
@@ -23,9 +26,9 @@
             let stats;
             let wall_size = 200; // Unit : cm
 			let ambient_light;
-			let torchesHolders = [];
-			let torchesFire = [];
-			let torchesLights = [];
+			let torchesHolders = []; let torchesFire = []; let torchesLights = []; let torchesAnalysers = []; let torchesAudio = [];
+
+			const listener = new THREE.AudioListener();
 
 			layout = readJson('layout.json');
 			console.log(layout);
@@ -93,6 +96,9 @@
                 stats.begin();
                 doomControls.update();
 				renderer.render( scene, camera );
+				for (let i = 0; i < torchesLights.length; i++) {
+					//torchesLights[i].distance = torchesAnalysers[i].getAverageFrequency()/1500;
+				}
                 stats.end();
 			}
 
@@ -113,6 +119,7 @@
                 camera.position.z = layout.start[1]*(wall_size)+0.5*wall_size;
 
                 camera.rotation.set(0, -Math.PI/2, 0);
+				camera.add(listener);
 			}
 
 			function generateGround(){
@@ -154,7 +161,7 @@
                 ambient_light = new THREE.AmbientLight(0xB52020, 0.4);
                 scene.add(ambient_light);
 				for (let i = 0; i < layout.torches.length; i++) {
-					buildTorches(layout.torches[i][0], layout.torches[i][1])
+					buildTorches(layout.torches[i][0], layout.torches[i][1]);
 				}
             }
 
@@ -163,6 +170,7 @@
 
 				const torchLoader = new GLTFLoader().setPath('./models/torch/');
 				const fireLoader = new GLTFLoader().setPath('./models/fire/');
+
 				torchLoader.load('scene.gltf', function (holder) {
 
 					holder.scene.traverse(function (child) {
@@ -197,6 +205,19 @@
 						}
 					});
 
+					let fireSound = new THREE.PositionalAudio(listener);
+					fireSound.setMediaElementSource(document.getElementById('fire'));
+					fireSound.setRefDistance(500);
+					fire.scene.add(fireSound);
+					fireSound.play();
+					fireSound.loop = true;
+					torchesAudio.push(fireSound);
+
+					let analyzer = new THREE.AudioAnalyser(fireSound,32);
+					torchesAnalysers.push(analyzer);
+
+
+
 
 					fire.scene.scale.set(wall_size*0.4, wall_size*0.4, wall_size*0.4);
 					fire.scene.position.x = (posX-1)*wall_size;
@@ -204,10 +225,8 @@
 					//gltf2.scene.rotation.y += Math.PI / 2;
 					fire.scene.position.y = wall_size*0.85;
 
-					torchesFire.push(fire.scene);
-
 					scene.add(fire.scene);
-
+					torchesFire.push(fire.scene);
 					roughnessMipmapper2.dispose();
 				});
 				let torchLight = new THREE.SpotLight(0xFF5555, 2);
