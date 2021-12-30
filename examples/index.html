@@ -97,10 +97,10 @@
                 stats.begin();
                 doomControls.update();
 				renderer.render( scene, camera );
+				lightVariation *= -1;
 				for (let i = 0; i < torchesAnalysers.length; i++) {
-					lightVariation *= -1;
 					torchesLights[i].angle += lightVariation*(torchesAnalysers[i].getAverageFrequency()/256);
-					torchesFire[i].scale.y += lightVariation*(torchesAnalysers[i].getAverageFrequency()/256)*(wall_size);
+					torchesFire[i].scale.y += lightVariation*(torchesAnalysers[i].getAverageFrequency()/256)*(wall_size*0.5);
 				}
                 stats.end();
 			}
