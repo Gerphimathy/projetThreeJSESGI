@@ -23,7 +23,9 @@
             let stats;
             let wall_size = 200; // Unit : cm
 			let ambient_light;
-			let builtModels = [];
+			let torchesHolders = [];
+			let torchesFire = [];
+			let torchesLights = [];
 
 			layout = readJson('layout.json');
 			console.log(layout);
@@ -178,7 +180,7 @@
 					//gltf2.scene.rotation.y += Math.PI / 2;
 					holder.scene.position.y = wall_size*0.8;
 
-					builtModels.push(holder.scene);
+					torchesHolders.push(holder.scene);
 
 					scene.add(holder.scene);
 
@@ -202,12 +204,29 @@
 					//gltf2.scene.rotation.y += Math.PI / 2;
 					fire.scene.position.y = wall_size*0.85;
 
-					builtModels.push(fire.scene);
+					torchesFire.push(fire.scene);
 
 					scene.add(fire.scene);
 
 					roughnessMipmapper2.dispose();
 				});
+				let torchLight = new THREE.SpotLight(0xFF5555, 2);
+				torchLight.position.x = (posX+1.5)*wall_size;
+				torchLight.position.y = wall_size*0.85;
+				torchLight.position.z = (posZ+0.5)*wall_size;
+				torchLight.angle = Math.PI / 4;
+				torchLight.penumbra = 0.4;
+				torchLight.decay = 2;
+				torchLight.distance = 1500;
+
+				torchLight.castShadow = true;
+				torchLight.shadow.mapSize.width = 1024;
+				torchLight.shadow.mapSize.height = 1024;
+				torchLight.shadow.camera.near = 10;
+				torchLight.shadow.camera.far = 200;
+				torchLight.shadow.focus = 1;
+				scene.add(torchLight);
+				torchesLights.push(torchLight);
 			}
 
 		</script>
