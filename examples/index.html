@@ -14,6 +14,8 @@
             import {DoomControls} from './doomControls.js';
 // 			import {OrbitControls} from "../examples/jsm/controls/OrbitControls.js";
 			import Stats from "./jsm/libs/stats.module.js";
+			import {RoughnessMipmapper} from "./jsm/utils/RoughnessMipmapper.js";
+			import {GLTFLoader} from "./jsm/loaders/GLTFLoader.js";
 
 			let camera, scene, renderer;
 			let layout;
@@ -21,6 +23,7 @@
             let stats;
             let wall_size = 200; // Unit : cm
 			let ambient_light;
+			let builtModels = [];
 
 			layout = readJson('layout.json');
 			console.log(layout);
@@ -64,7 +67,7 @@
 				document.body.appendChild( renderer.domElement );
                 document.getElementById("container").appendChild(stats.dom);
                 doomControls = new DoomControls(camera);
-                doomControls.canFly = false;
+                doomControls.canFly = true;
 				window.addEventListener( 'resize', onWindowResize );
 
 				generateGround();
@@ -100,8 +103,6 @@
                 controls.maxPolarAngle = 85 * Math.PI / 180;
             }
 */
-
-
 			function generateCamera(){
                 camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 5000 );
                 
@@ -123,8 +124,6 @@
                 ground.position.y = -25;
                 ground.position.z = wall_size*layout.width/2;
                 scene.add(ground);
-
-
 			}
 
 			function generateLabyrinth(){
@@ -144,18 +143,72 @@
                             wall.position.z = (i+.5)*wall_size;
                             layout.layout[i][j] = wall;
                             scene.add(layout.layout[i][j]);
-
-
                         }
                     }
                 }
-
 			}
 
             function generateLights(){
                 ambient_light = new THREE.AmbientLight(0xB52020, 0.4);
                 scene.add(ambient_light);
+				for (let i = 0; i < layout.torches.length; i++) {
+					buildTorches(layout.torches[i][0], layout.torches[i][1])
+				}
             }
+
+			function buildTorches(posX, posZ){
+				const roughnessMipmapper2 = new RoughnessMipmapper(renderer);
+
+				const torchLoader = new GLTFLoader().setPath('./models/torch/');
+				const fireLoader = new GLTFLoader().setPath('./models/fire/');
+				torchLoader.load('scene.gltf', function (holder) {
+
+					holder.scene.traverse(function (child) {
+
+						if (child.isMesh) {
+							roughnessMipmapper2.generateMipmaps(child.material);
+							child.castShadow = true;
+							child.receiveShadow = true;
+						}
+					});
+
+					holder.scene.scale.set(wall_size*0.2, wall_size*0.2, wall_size*0.2);
+					holder.scene.position.x = (posX+0.05)*wall_size;
+					holder.scene.position.z = (posZ+0.5)*wall_size;
+					//gltf2.scene.rotation.y += Math.PI / 2;
+					holder.scene.position.y = wall_size*0.8;
+
+					builtModels.push(holder.scene);
+
+					scene.add(holder.scene);
+
+					roughnessMipmapper2.dispose();
+
+				});
+				fireLoader.load('scene.gltf', function(fire){
+					fire.scene.traverse(function (child) {
+
+						if (child.isMesh) {
+							roughnessMipmapper2.generateMipmaps(child.material);
+							child.castShadow = true;
+							child.receiveShadow = true;
+						}
+					});
+
+
+					fire.scene.scale.set(wall_size*0.4, wall_size*0.4, wall_size*0.4);
+					fire.scene.position.x = (posX-1)*wall_size;
+					fire.scene.position.z = (posZ-0.2)*wall_size;
+					//gltf2.scene.rotation.y += Math.PI / 2;
+					fire.scene.position.y = wall_size*0.85;
+
+					builtModels.push(fire.scene);
+
+					scene.add(fire.scene);
+
+					roughnessMipmapper2.dispose();
+				});
+			}
 
 		</script>
 
