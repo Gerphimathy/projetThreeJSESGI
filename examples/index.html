@@ -27,6 +27,7 @@
             let wall_size = 200; // Unit : cm
 			let ambient_light;
 			let torchesHolders = []; let torchesFire = []; let torchesLights = []; let torchesAnalysers = []; let torchesAudio = [];
+			let lightVariation = 1;
 
 			const listener = new THREE.AudioListener();
 
@@ -96,8 +97,10 @@
                 stats.begin();
                 doomControls.update();
 				renderer.render( scene, camera );
-				for (let i = 0; i < torchesLights.length; i++) {
-					//torchesLights[i].distance = torchesAnalysers[i].getAverageFrequency()/1500;
+				for (let i = 0; i < torchesAnalysers.length; i++) {
+					lightVariation *= -1;
+					torchesLights[i].angle += lightVariation*(torchesAnalysers[i].getAverageFrequency()/256);
+					torchesFire[i].scale.y += lightVariation*(torchesAnalysers[i].getAverageFrequency()/256)*(wall_size);
 				}
                 stats.end();
 			}
@@ -182,6 +185,18 @@
 						}
 					});
 
+					let fireSound = new THREE.PositionalAudio(listener);
+					let fireElement = document.getElementById('fire');
+					fireSound.setMediaElementSource(fireElement);
+					fireSound.setRefDistance(wall_size*0.09);
+					holder.scene.add(fireSound);
+					fireElement.play();
+					fireElement.loop = true;
+					torchesAudio.push(fireSound);
+
+					let analyzer = new THREE.AudioAnalyser(fireSound,32);
+					torchesAnalysers.push(analyzer);
+
 					holder.scene.scale.set(wall_size*0.2, wall_size*0.2, wall_size*0.2);
 					holder.scene.position.x = (posX+0.05)*wall_size;
 					holder.scene.position.z = (posZ+0.5)*wall_size;
@@ -204,20 +219,6 @@
 							child.receiveShadow = true;
 						}
 					});
-
-					let fireSound = new THREE.PositionalAudio(listener);
-					fireSound.setMediaElementSource(document.getElementById('fire'));
-					fireSound.setRefDistance(500);
-					fire.scene.add(fireSound);
-					fireSound.play();
-					fireSound.loop = true;
-					torchesAudio.push(fireSound);
-
-					let analyzer = new THREE.AudioAnalyser(fireSound,32);
-					torchesAnalysers.push(analyzer);
-
-
-
 
 					fire.scene.scale.set(wall_size*0.4, wall_size*0.4, wall_size*0.4);
 					fire.scene.position.x = (posX-1)*wall_size;
