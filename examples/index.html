@@ -30,7 +30,7 @@
 			let lightVariation = 1;
 			let walls = [];
 
-			let doors = [];
+			let doorGroup = new THREE.Group();
 
 			const listener = new THREE.AudioListener();
 			const cameraHeight = 180;
@@ -196,14 +196,10 @@
 
 					});
 
-					///Door is way off center in its source scene
-					///[2,10] VS Intended [11,6]
-					door.scene.position.x = (posX+0.6+9)*wall_size;
-					door.scene.position.z = (posZ+0.5-4)*wall_size;
+					door.scene.position.x = (posX+0.6)*wall_size;
+					door.scene.position.z = (posZ+0.5)*wall_size;
 
 					door.scene.position.y += 2*wall_size;
-
-					let doorGroup = new THREE.Group();
 
 					const noTexture = new THREE.TextureLoader().load();
 					const imageMat = new THREE.MeshBasicMaterial({map:noTexture});
@@ -216,11 +212,8 @@
 					doorGroup.add(door.scene);
 					doorGroup.add(doorImage);
 
-					scene.add(doorImage);
+					scene.add(doorGroup);
 
-					scene.add(door.scene);
-
-					doors.push(doorGroup);
 					roughnessMipmapper2.dispose();
 				});
 			}
