@@ -30,6 +30,8 @@
 			let lightVariation = 1;
 			let walls = [];
 
+			let doors = [];
+
 			const listener = new THREE.AudioListener();
 			const cameraHeight = 180;
 			layout = readJson('layout.json');
@@ -59,7 +61,6 @@
 
 				generateCamera();
 
-
 				scene = new THREE.Scene();
 				scene.background = new THREE.TextureLoader().load('./textures/red_sky.jpg');
 				scene.fog = new THREE.Fog(new THREE.Color(0xdd0000), 0.25, wall_size*6);
@@ -80,9 +81,6 @@
 				generateGround();
                 generateLabyrinth();
                 generateLights();
-
-
-
 			}
 
 			function onWindowResize() {
@@ -175,6 +173,56 @@
                         }
                     }
                 }
+
+				const doorLoader = new GLTFLoader().setPath('./models/door/');
+
+				let posX = layout.door.position[0];
+				let posZ = layout.door.position[1];
+
+				let rotX = layout.door.facing[0];
+				let rotZ = layout.door.facing[1];
+
+				const roughnessMipmapper2 = new RoughnessMipmapper(renderer);
+
+				doorLoader.load('scene.gltf', function (door){
+
+					door.scene.traverse(function (child) {
+
+						if (child.isMesh) {
+							roughnessMipmapper2.generateMipmaps(child.material);
+							child.castShadow = true;
+							child.receiveShadow = true;
+						}
+
+					});
+
+					///Door is way off center in its source scene
+					///[2,10] VS Intended [11,6]
+					door.scene.position.x = (posX+0.6+9)*wall_size;
+					door.scene.position.z = (posZ+0.5-4)*wall_size;
+
+					door.scene.position.y += 2*wall_size;
+
+					let doorGroup = new THREE.Group();
+
+					const noTexture = new THREE.TextureLoader().load();
+					const imageMat = new THREE.MeshBasicMaterial({map:noTexture});
+					const imageGeo = new THREE.BoxGeometry(wall_size*0.8,wall_size,wall_size*0.2);
+					let doorImage = new THREE.Mesh(imageGeo, imageMat);
+					doorImage.position.x = (posX+1.5)*wall_size;
+					doorImage.position.y = wall_size/2;
+					doorImage.position.z = (posZ+0.2)*wall_size;
+
+					doorGroup.add(door.scene);
+					doorGroup.add(doorImage);
+
+					scene.add(doorImage);
+
+					scene.add(door.scene);
+
+					doors.push(doorGroup);
+					roughnessMipmapper2.dispose();
+				});
 			}
 
             function generateLights(){
