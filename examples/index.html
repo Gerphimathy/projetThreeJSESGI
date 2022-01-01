@@ -28,9 +28,10 @@
 			let ambient_light;
 			let torchesHolders = []; let torchesFire = []; let torchesLights = []; let torchesAnalysers = []; let torchesAudio = [];
 			let lightVariation = 1;
+			let walls = [];
 
 			const listener = new THREE.AudioListener();
-
+			const cameraHeight = 180;
 			layout = readJson('layout.json');
 			console.log(layout);
 
@@ -95,7 +96,10 @@
 
 			function animate() {
                 stats.begin();
+				if (camera.position.y!==cameraHeight) camera.position.y = cameraHeight;
+				let tempPos = [camera.position.x, camera.position.z];
                 doomControls.update();
+				checkProximity(tempPos);
 				renderer.render( scene, camera );
 				lightVariation *= -1;
 				for (let i = 0; i < torchesAnalysers.length; i++) {
@@ -114,11 +118,22 @@
                 controls.maxPolarAngle = 85 * Math.PI / 180;
             }
 */
+			function checkProximity(preMovePosition){
+				for (let x = -1; x <= 1; x++){
+					for (let z = -1; z <= 1; z++){
+						let ray = new THREE.Raycaster(camera.position, new THREE.Vector3(x,0,z));
+						let proximityCheckResults = ray.intersectObjects(walls);
+						if (proximityCheckResults.length>0 && proximityCheckResults[0].distance<=10) {
+							camera.position.set(preMovePosition[0], cameraHeight, preMovePosition[1]);
+						}
+					}
+				}
+			}
 			function generateCamera(){
                 camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 5000 );
                 
                 camera.position.x = layout.start[0]*wall_size-2*wall_size;
-                camera.position.y = 180;
+                camera.position.y = cameraHeight;
                 camera.position.z = layout.start[1]*(wall_size)+0.5*wall_size;
 
                 camera.rotation.set(0, -Math.PI/2, 0);
@@ -155,6 +170,8 @@
                             wall.position.z = (i+.5)*wall_size;
                             layout.layout[i][j] = wall;
                             scene.add(layout.layout[i][j]);
+							walls.push(wall);
+
                         }
                     }
                 }
