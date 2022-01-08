@@ -31,7 +31,7 @@
 			let walls = [];
 			let spookyRunner = [];
 
-			let doorGroup = new THREE.Group();
+			let openingDoor = [];
 
 			const listener = new THREE.AudioListener();
 			const cameraHeight = 180;
@@ -102,10 +102,12 @@
 				checkProximity(tempPos);
 				renderer.render( scene, camera );
 				lightVariation *= -1;
+
 				for (let i = 0; i < torchesAnalysers.length; i++) {
 					torchesLights[i].angle += lightVariation*(torchesAnalysers[i].getAverageFrequency()/256);
 					torchesFire[i].scale.y += lightVariation*(torchesAnalysers[i].getAverageFrequency()/256)*(wall_size*0.5);
 				}
+
 				if (!spookyRunner["active"]
 						&& camera.position.x>=layout.runner.trigger[0]*wall_size && camera.position.x<(layout.runner.trigger[0]+1)*wall_size
 						&& camera.position.z>=layout.runner.trigger[1]*wall_size && camera.position.z<(layout.runner.trigger[1]+1)*wall_size
@@ -132,6 +134,21 @@
 				if(spookyRunner["active"] && spookyRunner["frame"] === layout.runner.time) {
 					spookyRunner.elem.position.y *= -3*wall_size;
 					spookyRunner["active"] = false;
+				}
+
+				if (!openingDoor["open"]
+						&& camera.position.x>=layout.door.trigger[0]*wall_size && camera.position.x<(layout.door.trigger[0]+1)*wall_size
+						&& camera.position.z>=layout.door.trigger[1]*wall_size && camera.position.z<(layout.door.trigger[1]+1)*wall_size
+						&& openingDoor["frame"] === 0
+				) openingDoor["open"] = true;
+
+
+				if (openingDoor["open"] && openingDoor["frame"] !== layout.door.time){
+					let change = (layout.door.angle*(Math.PI/180))/layout.door.time;
+
+					openingDoor["pivot"].rotateY(change);
+
+					openingDoor["frame"]++;
 				}
 
                 stats.end();
@@ -204,48 +221,29 @@
                     }
                 }
 
-				const doorLoader = new GLTFLoader().setPath('./models/door/');
+				//TODO: Remplacer avec une texture de porte superimposé au bloc
+				const door_text = new THREE.TextureLoader().load('./textures/crying_obsidian.png');
+				const door_material = new THREE.MeshPhongMaterial({map:door_text});
+				const door_geometry = new THREE.BoxGeometry(wall_size,wall_size,wall_size*0.1);
+				let door = new THREE.Mesh(door_geometry, door_material);
 
-				let posX = layout.door.position[0];
-				let posZ = layout.door.position[1];
+				let pivot = new THREE.Object3D();
+				pivot.position.x = (layout.door.position[0]+1)*wall_size;
+				pivot.position.y = wall_size/2;
+				pivot.position.z = (layout.door.position[1]+1)*wall_size;
 
-				let rotX = layout.door.facing[0];
-				let rotZ = layout.door.facing[1];
+				pivot.add(door);
 
-				const roughnessMipmapper2 = new RoughnessMipmapper(renderer);
+				door.position.x -= 0.5*wall_size;
 
-				doorLoader.load('scene.gltf', function (door){
+				openingDoor = {
+					elem: door,
+					pivot: pivot,
+					open: false,
+					frame:0
+				};
 
-					door.scene.traverse(function (child) {
-
-						if (child.isMesh) {
-							roughnessMipmapper2.generateMipmaps(child.material);
-							child.castShadow = true;
-							child.receiveShadow = true;
-						}
-
-					});
-
-					door.scene.position.x = (posX+0.6)*wall_size;
-					door.scene.position.z = (posZ+0.5)*wall_size;
-
-					door.scene.position.y += 2*wall_size;
-
-					const noTexture = new THREE.TextureLoader().load();
-					const imageMat = new THREE.MeshBasicMaterial({map:noTexture});
-					const imageGeo = new THREE.BoxGeometry(wall_size*0.8,wall_size,wall_size*0.2);
-					let doorImage = new THREE.Mesh(imageGeo, imageMat);
-					doorImage.position.x = (posX+1.5)*wall_size;
-					doorImage.position.y = wall_size/2;
-					doorImage.position.z = (posZ+0.2)*wall_size;
-
-					doorGroup.add(door.scene);
-					doorGroup.add(doorImage);
-
-					scene.add(doorGroup);
-
-					roughnessMipmapper2.dispose();
-				});
+				scene.add(openingDoor["pivot"]);
 			}
 
             function generateLights(){
