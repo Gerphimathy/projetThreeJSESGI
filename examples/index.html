@@ -29,6 +29,7 @@
 			let torchesHolders = []; let torchesFire = []; let torchesLights = []; let torchesAnalysers = []; let torchesAudio = [];
 			let lightVariation = 1;
 			let walls = [];
+			let spookyRunner = [];
 
 			let doorGroup = new THREE.Group();
 
@@ -81,6 +82,7 @@
 				generateGround();
                 generateLabyrinth();
                 generateLights();
+				generateSpooks();
 			}
 
 			function onWindowResize() {
@@ -104,6 +106,34 @@
 					torchesLights[i].angle += lightVariation*(torchesAnalysers[i].getAverageFrequency()/256);
 					torchesFire[i].scale.y += lightVariation*(torchesAnalysers[i].getAverageFrequency()/256)*(wall_size*0.5);
 				}
+				if (!spookyRunner["active"]
+						&& camera.position.x>=layout.runner.trigger[0]*wall_size && camera.position.x<(layout.runner.trigger[0]+1)*wall_size
+						&& camera.position.z>=layout.runner.trigger[1]*wall_size && camera.position.z<(layout.runner.trigger[1]+1)*wall_size
+				) spookyRunner["active"] = true;
+				if (spookyRunner["active"]&&spookyRunner["frame"]!==layout.runner.time){
+
+					let initX = (layout.runner.start[0]+0.5)*(wall_size);
+					let initZ = (layout.runner.start[1]+0.5)*(wall_size);
+
+					let destX = (layout.runner.end[0]+0.5)*(wall_size);
+					let destZ = (layout.runner.end[1]+0.5)*(wall_size);
+
+					let distX = Math.abs(destX-initX)/layout.runner.time;
+					let distZ = Math.abs(destZ-initZ)/layout.runner.time;
+
+					if (distX<initX) spookyRunner["elem"].position.x += distX;
+					else spookyRunner["elem"].position.x -= distX;
+
+					if (distZ<initZ) spookyRunner["elem"].position.z += distZ;
+					else spookyRunner["elem"].position.z -= distZ;
+
+					spookyRunner["frame"]++;
+				}
+				if(spookyRunner["active"] && spookyRunner["frame"] === layout.runner.time) {
+					spookyRunner.elem.position.y *= -3*wall_size;
+					spookyRunner["active"] = false;
+				}
+
                 stats.end();
 			}
 
@@ -305,6 +335,34 @@
 				torchLight.shadow.focus = 1;
 				scene.add(torchLight);
 				torchesLights.push(torchLight);
+			}
+
+			function generateSpooks(){
+				let initX = (layout.runner.start[0]+0.5)*(wall_size);
+				let initZ = (layout.runner.start[1]+0.5)*(wall_size);
+
+				//TODO: Modèle ici au lieu d'une boite
+
+				const wall_text = new THREE.TextureLoader().load('./textures/crying_obsidian.png');
+				const wall_material = new THREE.MeshPhongMaterial({map:wall_text});
+				const wall_geometry = new THREE.BoxGeometry(wall_size*0.5,wall_size,wall_size*0.5);
+				let wall = new THREE.Mesh(wall_geometry, wall_material);
+				wall.receiveShadow = true;
+				wall.castShadow = true;
+				wall.position.x = initX;
+				wall.position.y = wall_size/2;
+				wall.position.z = initZ;
+
+				spookyRunner = {
+					elem: wall,
+					frame: 0,
+					active: false
+				}
+
+				scene.add(wall);
+
+				//TODO: Modèle ici au lieu d'une boite
+
 			}
 
 		</script>

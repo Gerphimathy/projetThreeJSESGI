@@ -25,5 +25,11 @@
 	"door": {
 		"facing": [-1, 0],
 		"position": [11, 6]
+	},
+	"runner": {
+		"start": [1,5],
+		"trigger": [7,5],
+		"end": [6,5],
+		"time": 120
 	}
 }
