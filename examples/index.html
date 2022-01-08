@@ -187,7 +187,7 @@
                 for(i = 0; i < layout.height; i++){
                     for(j = 0; j < layout.width; j++){
                         if(layout.layout[i][j] === 1){
-                            const wall_text = new THREE.TextureLoader().load('./textures/crying_obsidian.png');
+                            const wall_text = new THREE.TextureLoader().load('./textures/walls.jpg');
                             const wall_material = new THREE.MeshPhongMaterial({map:wall_text});
                             const wall_geometry = new THREE.BoxGeometry(wall_size,wall_size,wall_size);
 	                        let wall = new THREE.Mesh(wall_geometry, wall_material);
