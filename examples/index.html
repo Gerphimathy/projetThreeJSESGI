@@ -159,7 +159,7 @@
 			}
 			function generateCamera(){
                 camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 5000 );
-                
+
                 camera.position.x = layout.start[0]*wall_size-2*wall_size;
                 camera.position.y = cameraHeight;
                 camera.position.z = layout.start[1]*(wall_size)+0.5*wall_size;
@@ -341,27 +341,35 @@
 				let initX = (layout.runner.start[0]+0.5)*(wall_size);
 				let initZ = (layout.runner.start[1]+0.5)*(wall_size);
 
-				//TODO: Modèle ici au lieu d'une boite
+				var spook_material_array = [];
+				spook_material_array.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( './textures/skeleton.png' ), transparent: true, opacity: 1, color: 0xFF0000 }));
+				spook_material_array.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( './textures/skeleton.png' ), transparent: true, opacity: 1, color: 0xFF0000 }));
+				spook_material_array.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( './textures/skeleton.png' ), transparent: true, opacity: 1, color: 0xFF0000 }));
+				spook_material_array.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( './textures/skeleton.png' ), transparent: true, opacity: 1, color: 0xFF0000 }));
+				spook_material_array.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( './textures/skeleton.png' ), transparent: true, opacity: 1, color: 0xFF0000 }));
+				spook_material_array.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( './textures/skeleton.png' ), transparent: true, opacity: 1, color: 0xFF0000 }));
 
-				const wall_text = new THREE.TextureLoader().load('./textures/crying_obsidian.png');
-				const wall_material = new THREE.MeshPhongMaterial({map:wall_text});
-				const wall_geometry = new THREE.BoxGeometry(wall_size*0.5,wall_size,wall_size*0.5);
-				let wall = new THREE.Mesh(wall_geometry, wall_material);
-				wall.receiveShadow = true;
-				wall.castShadow = true;
-				wall.position.x = initX;
-				wall.position.y = wall_size/2;
-				wall.position.z = initZ;
+				/*const wall_text = new THREE.TextureLoader().load('./textures/skeleton.png');*/
+				/*const wall_material = new THREE.MeshPhongMaterial({map:wall_text});*/
+
+				const spook_material = new THREE.MeshFaceMaterial(spook_material_array);
+
+				const spook_geometry = new THREE.BoxGeometry(1,wall_size,wall_size*0.5);
+
+				let spook = new THREE.Mesh(spook_geometry, spook_material);
+				spook.receiveShadow = true;
+				spook.castShadow = true;
+				spook.position.x = initX;
+				spook.position.y = wall_size/2;
+				spook.position.z = initZ;
 
 				spookyRunner = {
-					elem: wall,
+					elem: spook,
 					frame: 0,
 					active: false
 				}
 
-				scene.add(wall);
-
-				//TODO: Modèle ici au lieu d'une boite
+				scene.add(spook);
 
 			}
 
