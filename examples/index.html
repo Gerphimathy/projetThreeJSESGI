@@ -27,6 +27,7 @@
 			let layout;
             let doomControls;
             let stats;
+            const clock = new THREE.Clock();
             let wall_size = 280; // Unit : cm
 			let ambient_light;
 			let torchesHolders = []; let torchesFire = []; let torchesLights = []; let torchesAnalysers = []; let torchesAudio = []; let torchesOn = false;
@@ -136,9 +137,10 @@
 
 			function animate() {
                 stats.begin();
+                const deltaTime = clock.getDelta();
 				//if (camera.position.y!==cameraHeight) camera.position.y = cameraHeight;
 				let tempPos = [camera.position.x, camera.position.z];
-                doomControls.update();
+                doomControls.update(deltaTime);
 				checkProximity(tempPos);
 				renderer.render( scene, camera );
 				lightVariation *= -1;
