@@ -24,7 +24,7 @@
 			let layout;
             let doomControls;
             let stats;
-            let wall_size = 200; // Unit : cm
+            let wall_size = 280; // Unit : cm
 			let ambient_light;
 			let torchesHolders = []; let torchesFire = []; let torchesLights = []; let torchesAnalysers = []; let torchesAudio = []; let torchesOn = false;
 			let lightVariation = 1;
@@ -299,12 +299,12 @@
 					if(!lateral){
 						holder.scene.position.x = (posX+0.05)*wall_size;
 						holder.scene.position.z = (posZ+0.5)*wall_size;
-						holder.scene.position.y = wall_size*0.8;
+						holder.scene.position.y = wall_size*0.55;
 					}else{
 						holder.scene.position.z = (posZ+0.95)*wall_size;
 						holder.scene.position.x = (posX+0.5)*wall_size;
 						holder.scene.rotation.y += Math.PI / 2;
-						holder.scene.position.y = wall_size*0.8;
+						holder.scene.position.y = wall_size*0.55;
 					}
 
 					torchesHolders.push(holder.scene);
@@ -340,11 +340,11 @@
 					if(!lateral){
 						fire.scene.position.x = (posX-1)*wall_size;
 						fire.scene.position.z = (posZ-0.2)*wall_size;
-						fire.scene.position.y = wall_size*0.85;
+						fire.scene.position.y = wall_size*0.60;
 					}else{
 						fire.scene.position.z = (posZ+0.2)*wall_size;
 						fire.scene.position.x = (posX-0.6)*wall_size;
-						fire.scene.position.y = wall_size*0.85;
+						fire.scene.position.y = wall_size*0.60;
 					}
 
 					scene.add(fire.scene);
@@ -354,11 +354,11 @@
 				let torchLight = new THREE.SpotLight(0xFF5555, 2);
 				if(!lateral){
 					torchLight.position.x = (posX+1.5)*wall_size;
-					torchLight.position.y = wall_size*0.85;
+					torchLight.position.y = wall_size*0.60;
 					torchLight.position.z = (posZ+0.5)*wall_size;
 				}else{
 					torchLight.position.x = (posX+1.7)*wall_size;
-					torchLight.position.y = wall_size*0.85;
+					torchLight.position.y = wall_size*0.60;
 					torchLight.position.z = (posZ+1.5)*wall_size;
 				}
 
@@ -397,12 +397,12 @@
 					if(!lateral){
 						holder.scene.position.x = (posX+0.05)*wall_size;
 						holder.scene.position.z = (posZ+0.5)*wall_size;
-						holder.scene.position.y = wall_size*0.8;
+						holder.scene.position.y = wall_size*0.55;
 					}else{
 						holder.scene.position.z = (posZ+0.95)*wall_size;
 						holder.scene.position.x = (posX+0.5)*wall_size;
 						holder.scene.rotation.y += Math.PI / 2;
-						holder.scene.position.y = wall_size*0.8;
+						holder.scene.position.y = wall_size*0.55;
 					}
 
 					torchesHolders.push(holder.scene);
@@ -433,11 +433,11 @@
 					if(!lateral){
 						fire.scene.position.x = (posX-1)*wall_size;
 						fire.scene.position.z = (posZ-0.2)*wall_size;
-						fire.scene.position.y = wall_size*0.85;
+						fire.scene.position.y = wall_size*0.60;
 					}else {
 						fire.scene.position.z = (posZ + 0.2) * wall_size;
 						fire.scene.position.x = (posX - 0.6) * wall_size;
-						fire.scene.position.y = wall_size * 0.85;
+						fire.scene.position.y = wall_size * 0.60;
 					}
 
 					let fireSound = new THREE.PositionalAudio(listener);
@@ -459,11 +459,11 @@
 				let torchLight = new THREE.SpotLight(0xFF5555, 2);
 				if(!lateral){
 					torchLight.position.x = (posX+1.5)*wall_size;
-					torchLight.position.y = wall_size*0.85;
+					torchLight.position.y = wall_size*0.60;
 					torchLight.position.z = (posZ+0.5)*wall_size;
 				}else{
 					torchLight.position.x = (posX+1.7)*wall_size;
-					torchLight.position.y = wall_size*0.85;
+					torchLight.position.y = wall_size*0.60;
 					torchLight.position.z = (posZ+1.5)*wall_size;
 				}
 
@@ -550,9 +550,9 @@
 						}
 					});
 
-					hanged.scene.scale.set(wall_size*0.7, wall_size*0.7, wall_size*0.7);
+					hanged.scene.scale.set(wall_size*0.6, wall_size*0.6, wall_size*0.6);
 					hanged.scene.position.x = layout.start[0]*wall_size + 11.5*wall_size;
-					hanged.scene.position.y = cameraHeight-170;
+					hanged.scene.position.y = cameraHeight-200;
 					hanged.scene.position.z = layout.start[1]*(wall_size) + 4.5*wall_size;
 					hanged.scene.rotation.y = degrees_to_radians(-180);
 
