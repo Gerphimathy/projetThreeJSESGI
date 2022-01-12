@@ -34,6 +34,7 @@
             let wall_size = 280; // Unit : cm
 			let ambient_light;
 			let torchesHolders = []; let torchesFire = []; let torchesLights = []; let torchesAnalysers = []; let torchesAudio = []; let torchesOn = false;
+			let activateLights = [];
 			let lightVariation = 1;
 			let walls = [];
 			let spookyRunner = [];
@@ -227,9 +228,7 @@
 						&& camera.position.z>=layout.torchesOff.trigger[1]*wall_size && camera.position.z<(layout.torchesOff.trigger[1]+1)*wall_size
 				){
 					torchesOn = true;
-					for (let i = 0; i < layout.torchesOff.locations.length; i++){
-						triggerTorches(layout.torchesOff.locations[i][0],layout.torchesOff.locations[i][1], false);
-					}
+					triggerTorches();
 				}
 
 				for (let i = 0; i < layout.screamers.length; i++){
@@ -574,11 +573,6 @@
 					roughnessMipmapper2.dispose();
 
 				});
-			}
-
-			function triggerTorches(posX, posZ, lateral){
-				const roughnessMipmapper2 = new RoughnessMipmapper(renderer);
-
 				const fireLoader = new GLTFLoader().setPath('./models/fire/');
 
 				fireLoader.load('scene.gltf', function(fire){
@@ -595,11 +589,11 @@
 					if(!lateral){
 						fire.scene.position.x = (posX-1)*wall_size;
 						fire.scene.position.z = (posZ-0.2)*wall_size;
-						fire.scene.position.y = wall_size*0.60;
+						fire.scene.position.y = -5*wall_size*0.60;
 					}else {
 						fire.scene.position.z = (posZ + 0.2) * wall_size;
 						fire.scene.position.x = (posX - 0.6) * wall_size;
-						fire.scene.position.y = wall_size * 0.60;
+						fire.scene.position.y = -5*wall_size * 0.60;
 					}
 
 					let fireSound = new THREE.PositionalAudio(listener);
@@ -616,16 +610,17 @@
 
 					scene.add(fire.scene);
 					torchesFire.push(fire.scene);
+					activateLights.push(fire.scene);
 					roughnessMipmapper2.dispose();
 				});
 				let torchLight = new THREE.SpotLight(0xFF5555, 2);
 				if(!lateral){
 					torchLight.position.x = (posX+1.5)*wall_size;
-					torchLight.position.y = wall_size*0.60;
+					torchLight.position.y = -5*wall_size*0.60;
 					torchLight.position.z = (posZ+0.5)*wall_size;
 				}else{
 					torchLight.position.x = (posX+1.7)*wall_size;
-					torchLight.position.y = wall_size*0.60;
+					torchLight.position.y = -5*wall_size*0.60;
 					torchLight.position.z = (posZ+1.5)*wall_size;
 				}
 
@@ -642,6 +637,13 @@
 				torchLight.shadow.focus = 1;
 				scene.add(torchLight);
 				torchesLights.push(torchLight);
+				activateLights.push(torchLight);
+			}
+
+			function triggerTorches(posX, posZ, lateral){
+				for (let i = 0; i < activateLights.length; i++){
+					activateLights[i].position.y = wall_size*0.60;
+				}
 			}
 
 			function generateSpooks(){
