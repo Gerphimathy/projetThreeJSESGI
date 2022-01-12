@@ -207,25 +207,24 @@
 						&& camera.position.x>=layout.door.trigger[0]*wall_size && camera.position.x<(layout.door.trigger[0]+1)*wall_size
 						&& camera.position.z>=layout.door.trigger[1]*wall_size && camera.position.z<(layout.door.trigger[1]+1)*wall_size
 						&& openingDoor["frame"] === 0
-				) openingDoor["open"] = true;
-
-
-				if (openingDoor["open"] && openingDoor["frame"] !== layout.door.time){
-					let change = (layout.door.angle*(Math.PI/180))/layout.door.time;
-
-					openingDoor["pivot"].rotateY(change);
-
+				) {
+					openingDoor["open"] = true;
 					let doorElem = document.getElementById('door');
 					let doorSound = new THREE.PositionalAudio(listener);
 					doorSound.setMediaElementSource(doorElem);
-					doorSound.setRefDistance(wall_size*0.09);
+					doorSound.setRefDistance(wall_size*0.07);
 
 					openingDoor["elem"].add(doorSound);
 					doorElem.loop = false;
 					doorElem.play();
+				}
 
 
+				if (openingDoor["open"] && openingDoor["frame"] !== layout.door.time){
 					openingDoor["frame"]++;
+					let change = (layout.door.angle*(Math.PI/180))/layout.door.time;
+
+					openingDoor["pivot"].rotateY(change);
 				}
 
 				if (!torchesOn
@@ -348,7 +347,7 @@
 					for (let z = -1; z <= 1; z++){
 						let ray = new THREE.Raycaster(camera.position, new THREE.Vector3(x,0,z));
 						let proximityCheckResults = ray.intersectObjects(walls);
-						if (proximityCheckResults.length>0 && proximityCheckResults[0].distance<=10) {
+						if (proximityCheckResults.length>0 && proximityCheckResults[0].distance<=30) {
 							camera.position.set(preMovePosition[0], cameraHeight, preMovePosition[1]);
 						}
 					}
