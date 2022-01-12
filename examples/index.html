@@ -87,6 +87,7 @@
 
 				generateGround();
                 generateLabyrinth();
+                generateCeiling();
                 generateLights();
 				generateSpooks();
 				generateBonjour();
@@ -560,6 +561,27 @@
 					//roughnessMipmapper2.dispose();
 				});
 			}
+
+            function generateCeiling(){
+                let i, j;
+                let slab_size = 20;
+
+                for(i = 0; i < layout.height; i++) {
+                    for (j = 0; j < layout.width; j++) {
+	                    const slab_text = new THREE.TextureLoader().load('./textures/walls.jpg');
+	                    const slab_material = new THREE.MeshPhongMaterial({map: slab_text});
+	                    const slab_geometry = new THREE.BoxGeometry(wall_size, slab_size, wall_size);
+	                    let slab = new THREE.Mesh(slab_geometry, slab_material);
+	                    slab.receiveShadow = true;
+	                    slab.castShadow = true;
+	                    slab.position.x = (j + .5) * wall_size;
+	                    slab.position.y = wall_size + slab_size / 2;
+	                    slab.position.z = (i + .5) * wall_size;
+	                    scene.add(slab);
+
+                    }
+                }
+            }
 
 		</script>
 
