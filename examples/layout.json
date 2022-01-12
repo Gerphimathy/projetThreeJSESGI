@@ -43,5 +43,9 @@
 		"trigger": [7,5],
 		"end": [6,5],
 		"time": 60
+	},
+	"crumbling": {
+		"position": [5,7],
+		"trigger": [6,7]
 	}
 }
