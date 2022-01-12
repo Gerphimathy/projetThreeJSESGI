@@ -16,8 +16,8 @@ export class DoomControls extends EventDispatcher{
         this.canFly = true;
         this.canLookUpDown = true;
 
-        this.moveSpeed = 4;
-        this.rotateSpeed = Math.PI/100;
+        this.moveSpeed = 400;
+        this.rotateSpeed = Math.PI;
 
 
         let status = {
@@ -134,21 +134,21 @@ export class DoomControls extends EventDispatcher{
         document.addEventListener("keyup",handleKeyUp);
 
 
-        this.update = function () {
-            if (status.W) this.object.translateZ(-this.moveSpeed);
-            if (status.A && this.canStrafe) this.object.translateX(-this.moveSpeed);
-            if (status.S) this.object.translateZ(this.moveSpeed);
-            if (status.D && this.canStrafe) this.object.translateX(this.moveSpeed);
+        this.update = function (delta) {
+            if (status.W) this.object.translateZ(-delta *this.moveSpeed);
+            if (status.A && this.canStrafe) this.object.translateX(-delta *this.moveSpeed);
+            if (status.S) this.object.translateZ(delta *this.moveSpeed);
+            if (status.D && this.canStrafe) this.object.translateX(delta *this.moveSpeed);
 
-            if (status.UP && this.canLookUpDown) this.object.rotateX(this.rotateSpeed);
-            if (status.LEFT) this.object.rotateY(this.rotateSpeed);
-            if (status.DOWN && this.canLookUpDown) this.object.rotateX(-this.rotateSpeed);
-            if (status.RIGHT) this.object.rotateY(-this.rotateSpeed);
-            if (status.Q && this.canBarrelroll) this.object.rotateZ(this.rotateSpeed);
-            if (status.E && this.canBarrelroll) this.object.rotateZ(-this.rotateSpeed);
+            if (status.UP && this.canLookUpDown) this.object.rotateX(delta *this.rotateSpeed);
+            if (status.LEFT) this.object.rotateY(delta *this.rotateSpeed);
+            if (status.DOWN && this.canLookUpDown) this.object.rotateX(-delta *this.rotateSpeed);
+            if (status.RIGHT) this.object.rotateY(-delta *this.rotateSpeed);
+            if (status.Q && this.canBarrelroll) this.object.rotateZ(delta *this.rotateSpeed);
+            if (status.E && this.canBarrelroll) this.object.rotateZ(-delta *this.rotateSpeed);
 
-            if (status.SPACE && this.canFly) this.object.translateY(this.moveSpeed);
-            if (status.SHIFT && this.canFly) this.object.translateY(-this.moveSpeed);
+            if (status.SPACE && this.canFly) this.object.translateY(delta *this.moveSpeed);
+            if (status.SHIFT && this.canFly) this.object.translateY(-delta *this.moveSpeed);
         }
     }
 

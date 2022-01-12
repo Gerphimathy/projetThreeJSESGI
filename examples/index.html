@@ -11,6 +11,7 @@
 	</audio>
 	<body>
 		<div id="container"></div>
+		<script src="js/libs/ammo.wasm.js"></script> <!-- Ammo -->
 		<script type="module">
 
 			import * as THREE from '../build/three.module.js';
@@ -19,12 +20,15 @@
 			import Stats from "./jsm/libs/stats.module.js";
 			import {RoughnessMipmapper} from "./jsm/utils/RoughnessMipmapper.js";
 			import {GLTFLoader} from "./jsm/loaders/GLTFLoader.js";
+            import { ConvexObjectBreaker } from './jsm/misc/ConvexObjectBreaker.js';
+//            import { ConvexGeometry } from './jsm/geometries/ConvexGeometry.js';
 
 			let camera, scene, renderer;
 			let layout;
             let doomControls;
             let stats;
-            let wall_size = 200; // Unit : cm
+            const clock = new THREE.Clock();
+            let wall_size = 280; // Unit : cm
 			let ambient_light;
 			let torchesHolders = []; let torchesFire = []; let torchesLights = []; let torchesAnalysers = []; let torchesAudio = []; let torchesOn = false;
 			let lightVariation = 1;
@@ -39,19 +43,58 @@
 			layout = readJson('layout.json');
 			console.log(layout);
 
+            // Physics variables
+            const gravityConstant = 7.8;
+            let collisionConfiguration;
+            let dispatcher;
+            let broadphase;
+            let solver;
+            let physicsWorld;
+            const margin = 0.05;
 
-			init();
-			animate();
+            const convexBreaker = new ConvexObjectBreaker();
+
+            // Rigid bodies include all movable objects
+            const rigidBodies = [];
+
+            const pos = new THREE.Vector3();
+            const quat = new THREE.Quaternion();
+            let transformAux1;
+            let tempBtVec3_1;
+
+            const objectsToRemove = [];
+
+            for ( let i = 0; i < 500; i ++ ) {
+
+                objectsToRemove[ i ] = null;
+
+            }
+
+            let numObjectsToRemove = 0;
+
+            const impactPoint = new THREE.Vector3();
+            const impactNormal = new THREE.Vector3();
+
+
+            Ammo().then( function ( AmmoLib ) {
+
+                Ammo = AmmoLib;
+
+
+                init();
+                animate();
+
+            } );
 
 			function degrees_to_radians(degrees)
 			{
-			  var pi = Math.PI;
+			  let pi = Math.PI;
 			  return degrees * (pi/180);
 			}
 
 			function readJson(file) {
-				var jObject;
-				var req = new XMLHttpRequest();
+				let jObject;
+				let req = new XMLHttpRequest();
 				req.open("GET", "./layout.json", false);
 				req.onreadystatechange = function () {
 					if (req.readyState === 4) {
@@ -86,8 +129,11 @@
                 doomControls.canFly = true;
 				window.addEventListener( 'resize', onWindowResize );
 
+                initPhysics()
+
 				generateGround();
                 generateLabyrinth();
+                generateCeiling();
                 generateLights();
 				generateSpooks();
 				generateBonjour();
@@ -106,11 +152,11 @@
 
 			function animate() {
                 stats.begin();
+                const deltaTime = clock.getDelta();
 				//if (camera.position.y!==cameraHeight) camera.position.y = cameraHeight;
 				let tempPos = [camera.position.x, camera.position.z];
-                doomControls.update();
+                doomControls.update(deltaTime);
 				checkProximity(tempPos);
-				renderer.render( scene, camera );
 				lightVariation *= -1;
 
 				for (let i = 0; i < torchesAnalysers.length; i++) {
@@ -187,6 +233,9 @@
 					if (screamer.toggled && screamer.timer===screamer.lingering) screamerElems[i].position.y = -3 * wall_size * wall_size * screamer.surface[1];
 				}
 
+
+                updatePhysics(deltaTime);
+                renderer.render( scene, camera );
                 stats.end();
 			}
 
@@ -198,7 +247,25 @@
                 controls.enablePan = false;
                 controls.maxPolarAngle = 85 * Math.PI / 180;
             }
+
 */
+
+            function initPhysics() {
+
+                // Physics configuration
+
+                collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
+                dispatcher = new Ammo.btCollisionDispatcher(collisionConfiguration);
+                broadphase = new Ammo.btDbvtBroadphase();
+                solver = new Ammo.btSequentialImpulseConstraintSolver();
+                physicsWorld = new Ammo.btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
+                physicsWorld.setGravity(new Ammo.btVector3(0, -gravityConstant, 0));
+
+                transformAux1 = new Ammo.btTransform();
+                tempBtVec3_1 = new Ammo.btVector3(0, 0, 0);
+            }
+
+
 			function prepareScreamers() {
 				for (let i = 0; i < layout.screamers.length; i++) {
 					let screamer = layout.screamers[i];
@@ -283,13 +350,17 @@
 				const ground_text = new THREE.TextureLoader().load('./textures/ground.jpg');
                 const ground_material = new THREE.MeshPhongMaterial({map:ground_text});
                 const ground_geometry = new THREE.BoxGeometry(wall_size*layout.height,50,wall_size*layout.width);
-                let ground = new THREE.Mesh(ground_geometry, ground_material);
+                const ground = new THREE.Mesh(ground_geometry, ground_material);
                 ground.receiveShadow = true;
                 ground.castShadow = true;
                 ground.position.x = wall_size*layout.height/2;
                 ground.position.y = -25;
                 ground.position.z = wall_size*layout.width/2;
-                scene.add(ground);
+
+                const shape = new Ammo.btBoxShape( new Ammo.btVector3( wall_size*layout.height/2, 25-margin, wall_size*layout.width/2 ) );
+
+                createRigidBody( ground, shape, 0, 0, 0 );
+
 			}
 
 			function generateLabyrinth(){
@@ -308,8 +379,9 @@
                             wall.position.y = wall_size/2;
                             wall.position.z = (i+.5)*wall_size;
                             layout.layout[i][j] = wall;
-                            scene.add(layout.layout[i][j]);
 							walls.push(wall);
+                            const shape = new Ammo.btBoxShape( new Ammo.btVector3( wall_size/2, wall_size/2, wall_size/2 ) );
+                            createRigidBody( wall, shape, 0, 0, 0 );
 
                         }
                     }
@@ -374,12 +446,12 @@
 					if(!lateral){
 						holder.scene.position.x = (posX+0.05)*wall_size;
 						holder.scene.position.z = (posZ+0.5)*wall_size;
-						holder.scene.position.y = wall_size*0.8;
+						holder.scene.position.y = wall_size*0.55;
 					}else{
 						holder.scene.position.z = (posZ+0.95)*wall_size;
 						holder.scene.position.x = (posX+0.5)*wall_size;
 						holder.scene.rotation.y += Math.PI / 2;
-						holder.scene.position.y = wall_size*0.8;
+						holder.scene.position.y = wall_size*0.55;
 					}
 
 					torchesHolders.push(holder.scene);
@@ -415,11 +487,11 @@
 					if(!lateral){
 						fire.scene.position.x = (posX-1)*wall_size;
 						fire.scene.position.z = (posZ-0.2)*wall_size;
-						fire.scene.position.y = wall_size*0.85;
+						fire.scene.position.y = wall_size*0.60;
 					}else{
 						fire.scene.position.z = (posZ+0.2)*wall_size;
 						fire.scene.position.x = (posX-0.6)*wall_size;
-						fire.scene.position.y = wall_size*0.85;
+						fire.scene.position.y = wall_size*0.60;
 					}
 
 					scene.add(fire.scene);
@@ -429,11 +501,11 @@
 				let torchLight = new THREE.SpotLight(0xFF5555, 2);
 				if(!lateral){
 					torchLight.position.x = (posX+1.5)*wall_size;
-					torchLight.position.y = wall_size*0.85;
+					torchLight.position.y = wall_size*0.60;
 					torchLight.position.z = (posZ+0.5)*wall_size;
 				}else{
 					torchLight.position.x = (posX+1.7)*wall_size;
-					torchLight.position.y = wall_size*0.85;
+					torchLight.position.y = wall_size*0.60;
 					torchLight.position.z = (posZ+1.5)*wall_size;
 				}
 
@@ -472,12 +544,12 @@
 					if(!lateral){
 						holder.scene.position.x = (posX+0.05)*wall_size;
 						holder.scene.position.z = (posZ+0.5)*wall_size;
-						holder.scene.position.y = wall_size*0.8;
+						holder.scene.position.y = wall_size*0.55;
 					}else{
 						holder.scene.position.z = (posZ+0.95)*wall_size;
 						holder.scene.position.x = (posX+0.5)*wall_size;
 						holder.scene.rotation.y += Math.PI / 2;
-						holder.scene.position.y = wall_size*0.8;
+						holder.scene.position.y = wall_size*0.55;
 					}
 
 					torchesHolders.push(holder.scene);
@@ -508,11 +580,11 @@
 					if(!lateral){
 						fire.scene.position.x = (posX-1)*wall_size;
 						fire.scene.position.z = (posZ-0.2)*wall_size;
-						fire.scene.position.y = wall_size*0.85;
+						fire.scene.position.y = wall_size*0.60;
 					}else {
 						fire.scene.position.z = (posZ + 0.2) * wall_size;
 						fire.scene.position.x = (posX - 0.6) * wall_size;
-						fire.scene.position.y = wall_size * 0.85;
+						fire.scene.position.y = wall_size * 0.60;
 					}
 
 					let fireSound = new THREE.PositionalAudio(listener);
@@ -534,11 +606,11 @@
 				let torchLight = new THREE.SpotLight(0xFF5555, 2);
 				if(!lateral){
 					torchLight.position.x = (posX+1.5)*wall_size;
-					torchLight.position.y = wall_size*0.85;
+					torchLight.position.y = wall_size*0.60;
 					torchLight.position.z = (posZ+0.5)*wall_size;
 				}else{
 					torchLight.position.x = (posX+1.7)*wall_size;
-					torchLight.position.y = wall_size*0.85;
+					torchLight.position.y = wall_size*0.60;
 					torchLight.position.z = (posZ+1.5)*wall_size;
 				}
 
@@ -625,9 +697,9 @@
 						}
 					});
 
-					hanged.scene.scale.set(wall_size*0.7, wall_size*0.7, wall_size*0.7);
+					hanged.scene.scale.set(wall_size*0.6, wall_size*0.6, wall_size*0.6);
 					hanged.scene.position.x = layout.start[0]*wall_size + 11.5*wall_size;
-					hanged.scene.position.y = cameraHeight-170;
+					hanged.scene.position.y = cameraHeight-200;
 					hanged.scene.position.z = layout.start[1]*(wall_size) + 4.5*wall_size;
 					hanged.scene.rotation.y = degrees_to_radians(-180);
 
@@ -635,6 +707,293 @@
 					//roughnessMipmapper2.dispose();
 				});
 			}
+
+            function generateCeiling(){
+                let i, j;
+                let slab_size = 20;
+
+                for(i = 0; i < layout.height; i++) {
+                    for (j = 0; j < layout.width; j++) {
+	                    const slab_text = new THREE.TextureLoader().load('./textures/walls.jpg');
+	                    const slab_material = new THREE.MeshPhongMaterial({map: slab_text});
+	                    const slab_geometry = new THREE.BoxGeometry(wall_size, slab_size, wall_size);
+	                    const slab = new THREE.Mesh(slab_geometry, slab_material);
+                        slab.position.x = (j + .5) * wall_size;
+                        slab.position.y = wall_size + slab_size / 2;
+                        slab.position.z = (i + .5) * wall_size;
+
+                        if(j===layout.crumbling.position[0] && i===layout.crumbling.position[1]) {
+                            convexBreaker.prepareBreakableObject(slab, 3000, new THREE.Vector3(), new THREE.Vector3(), true);
+                            createDebrisFromBreakableObject(slab);
+                        }else{
+                            const shape = new Ammo.btBoxShape( new Ammo.btVector3( wall_size/2-margin, slab_size/2, wall_size/2-margin ) );
+                            createRigidBody( slab, shape, 0, 0, 0 );
+                        }
+
+	                    scene.add(slab);
+
+                    }
+                }
+            }
+
+            //Ammo functions
+
+            function createDebrisFromBreakableObject( object ) {
+
+                object.castShadow = true;
+                object.receiveShadow = true;
+
+                const shape = createConvexHullPhysicsShape( object.geometry.attributes.position.array );
+                shape.setMargin( margin );
+
+                const body = createRigidBody( object, shape, object.userData.mass, null, null, object.userData.velocity, object.userData.angularVelocity );
+
+                // Set pointer back to the three object only in the debris objects
+                const btVecUserData = new Ammo.btVector3( 0, 0, 0 );
+                btVecUserData.threeObject = object;
+                body.setUserPointer( btVecUserData );
+
+            }
+
+            function removeDebris( object ) {
+
+                scene.remove( object );
+
+                physicsWorld.removeRigidBody( object.userData.physicsBody );
+
+            }
+
+            function createConvexHullPhysicsShape( coords ) {
+
+                const shape = new Ammo.btConvexHullShape();
+
+                for ( let i = 0, il = coords.length; i < il; i += 3 ) {
+
+                    tempBtVec3_1.setValue( coords[ i ], coords[ i + 1 ], coords[ i + 2 ] );
+                    const lastOne = ( i >= ( il - 3 ) );
+                    shape.addPoint( tempBtVec3_1, lastOne );
+
+                }
+
+                return shape;
+
+            }
+
+            function createRigidBody( object, physicsShape, mass, pos, quat, vel, angVel ) {
+
+                if ( pos ) {
+
+                    object.position.copy( pos );
+
+                } else {
+
+                    pos = object.position;
+
+                }
+
+                if ( quat ) {
+
+                    object.quaternion.copy( quat );
+
+                } else {
+
+                    quat = object.quaternion;
+
+                }
+
+                const transform = new Ammo.btTransform();
+                transform.setIdentity();
+                transform.setOrigin( new Ammo.btVector3( pos.x, pos.y, pos.z ) );
+                transform.setRotation( new Ammo.btQuaternion( quat.x, quat.y, quat.z, quat.w ) );
+                const motionState = new Ammo.btDefaultMotionState( transform );
+
+                const localInertia = new Ammo.btVector3( 0, 0, 0 );
+                physicsShape.calculateLocalInertia( mass, localInertia );
+
+                const rbInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, physicsShape, localInertia );
+                const body = new Ammo.btRigidBody( rbInfo );
+
+                body.setFriction( 0.5 );
+
+                if ( vel ) {
+
+                    body.setLinearVelocity( new Ammo.btVector3( vel.x, vel.y, vel.z ) );
+
+                }
+
+                if ( angVel ) {
+
+                    body.setAngularVelocity( new Ammo.btVector3( angVel.x, angVel.y, angVel.z ) );
+
+                }
+
+                object.userData.physicsBody = body;
+                object.userData.collided = false;
+
+                scene.add( object );
+
+                if ( mass > 0 ) {
+
+                    rigidBodies.push( object );
+
+                    // Disable deactivation
+                    body.setActivationState( 4 );
+
+                }
+
+                physicsWorld.addRigidBody( body );
+
+                return body;
+
+            }
+
+
+            function updatePhysics( deltaTime ) {
+
+                // Step world
+                physicsWorld.stepSimulation( deltaTime, 1 );
+
+                // Update rigid bodies
+                for ( let i = 0, il = rigidBodies.length; i < il; i ++ ) {
+
+                    const objThree = rigidBodies[ i ];
+                    const objPhys = objThree.userData.physicsBody;
+                    const ms = objPhys.getMotionState();
+
+                    if ( ms ) {
+
+                        ms.getWorldTransform( transformAux1 );
+                        const p = transformAux1.getOrigin();
+                        const q = transformAux1.getRotation();
+                        objThree.position.set( p.x(), p.y(), p.z() );
+                        objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
+
+                        objThree.userData.collided = false;
+
+                    }
+
+                }
+
+                for ( let i = 0, il = dispatcher.getNumManifolds(); i < il; i ++ ) {
+
+                    const contactManifold = dispatcher.getManifoldByIndexInternal( i );
+                    const rb0 = Ammo.castObject( contactManifold.getBody0(), Ammo.btRigidBody );
+                    const rb1 = Ammo.castObject( contactManifold.getBody1(), Ammo.btRigidBody );
+
+                    const threeObject0 = Ammo.castObject( rb0.getUserPointer(), Ammo.btVector3 ).threeObject;
+                    const threeObject1 = Ammo.castObject( rb1.getUserPointer(), Ammo.btVector3 ).threeObject;
+
+                    if ( ! threeObject0 && ! threeObject1 ) {
+
+                        continue;
+
+                    }
+
+                    const userData0 = threeObject0 ? threeObject0.userData : null;
+                    const userData1 = threeObject1 ? threeObject1.userData : null;
+
+                    const breakable0 = userData0 ? userData0.breakable : false;
+                    const breakable1 = userData1 ? userData1.breakable : false;
+
+                    const collided0 = userData0 ? userData0.collided : false;
+                    const collided1 = userData1 ? userData1.collided : false;
+
+                    if ( ( ! breakable0 && ! breakable1 ) || ( collided0 && collided1 ) ) {
+
+                        continue;
+
+                    }
+
+                    let contact = false;
+                    let maxImpulse = 0;
+                    for ( let j = 0, jl = contactManifold.getNumContacts(); j < jl; j ++ ) {
+
+                        const contactPoint = contactManifold.getContactPoint( j );
+
+                        if ( contactPoint.getDistance() < 0 ) {
+
+                            contact = true;
+                            const impulse = contactPoint.getAppliedImpulse();
+
+                            if ( impulse > maxImpulse ) {
+
+                                maxImpulse = impulse;
+                                const pos = contactPoint.get_m_positionWorldOnB();
+                                const normal = contactPoint.get_m_normalWorldOnB();
+                                impactPoint.set( pos.x(), pos.y(), pos.z() );
+                                impactNormal.set( normal.x(), normal.y(), normal.z() );
+
+                            }
+
+                            break;
+
+                        }
+
+                    }
+
+                    // If no point has contact, abort
+                    if ( ! contact ) continue;
+
+                    // Subdivision
+
+                    const fractureImpulse = 250;
+
+                    if ( breakable0 && ! collided0 && maxImpulse > fractureImpulse ) {
+
+                        const debris = convexBreaker.subdivideByImpact( threeObject0, impactPoint, impactNormal, 1, 2, 1.5 );
+
+                        const numObjects = debris.length;
+                        for ( let j = 0; j < numObjects; j ++ ) {
+
+                            const vel = rb0.getLinearVelocity();
+                            const angVel = rb0.getAngularVelocity();
+                            const fragment = debris[ j ];
+                            fragment.userData.velocity.set( vel.x(), vel.y(), vel.z() );
+                            fragment.userData.angularVelocity.set( angVel.x(), angVel.y(), angVel.z() );
+
+                            createDebrisFromBreakableObject( fragment );
+
+                        }
+
+                        objectsToRemove[ numObjectsToRemove ++ ] = threeObject0;
+                        userData0.collided = true;
+
+                    }
+
+                    if ( breakable1 && ! collided1 && maxImpulse > fractureImpulse ) {
+
+                        const debris = convexBreaker.subdivideByImpact( threeObject1, impactPoint, impactNormal, 1, 2, 1.5 );
+
+                        const numObjects = debris.length;
+                        for ( let j = 0; j < numObjects; j ++ ) {
+
+                            const vel = rb1.getLinearVelocity();
+                            const angVel = rb1.getAngularVelocity();
+                            const fragment = debris[ j ];
+                            fragment.userData.velocity.set( vel.x(), vel.y(), vel.z() );
+                            fragment.userData.angularVelocity.set( angVel.x(), angVel.y(), angVel.z() );
+
+                            createDebrisFromBreakableObject( fragment );
+
+                        }
+
+                        objectsToRemove[ numObjectsToRemove ++ ] = threeObject1;
+                        userData1.collided = true;
+
+                    }
+
+                }
+
+                for ( let i = 0; i < numObjectsToRemove; i ++ ) {
+
+                    removeDebris( objectsToRemove[ i ] );
+
+                }
+
+                numObjectsToRemove = 0;
+
+            }
+
 
 		</script>
 
