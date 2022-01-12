@@ -26,7 +26,7 @@
             let stats;
             let wall_size = 200; // Unit : cm
 			let ambient_light;
-			let torchesHolders = []; let torchesFire = []; let torchesLights = []; let torchesAnalysers = []; let torchesAudio = [];
+			let torchesHolders = []; let torchesFire = []; let torchesLights = []; let torchesAnalysers = []; let torchesAudio = []; let torchesOn = false;
 			let lightVariation = 1;
 			let walls = [];
 			let spookyRunner = [];
@@ -152,6 +152,15 @@
 					openingDoor["frame"]++;
 				}
 
+				if (!torchesOn
+						&& camera.position.x>=layout.torchesOff.trigger[0]*wall_size && camera.position.x<(layout.torchesOff.trigger[0]+1)*wall_size
+						&& camera.position.z>=layout.torchesOff.trigger[1]*wall_size && camera.position.z<(layout.torchesOff.trigger[1]+1)*wall_size
+				){
+					torchesOn = true;
+					for (let i = 0; i < layout.torchesOff.locations.length; i++){
+						triggerTorches(layout.torchesOff.locations[i][0],layout.torchesOff.locations[i][1], false);
+					}
+				}
                 stats.end();
 			}
 
@@ -251,11 +260,17 @@
                 ambient_light = new THREE.AmbientLight(0xB52020, 0.4);
                 scene.add(ambient_light);
 				for (let i = 0; i < layout.torches.length; i++) {
-					buildTorches(layout.torches[i][0], layout.torches[i][1]);
+					buildTorches(layout.torches[i][0], layout.torches[i][1], false);
+				}
+				for (let i = 0; i < layout.torchesLat.length; i++) {
+					buildTorches(layout.torchesLat[i][0], layout.torchesLat[i][1], true);
+				}
+				for (let i = 0; i < layout.torchesOff.locations.length; i++){
+					buildTriggeringTorches(layout.torchesOff.locations[i][0],layout.torchesOff.locations[i][1], false);
 				}
             }
 
-			function buildTorches(posX, posZ){
+			function buildTorches(posX, posZ, lateral){
 				const roughnessMipmapper2 = new RoughnessMipmapper(renderer);
 
 				const torchLoader = new GLTFLoader().setPath('./models/torch/');
@@ -272,6 +287,22 @@
 						}
 					});
 
+					holder.scene.scale.set(wall_size*0.2, wall_size*0.2, wall_size*0.2);
+					if(!lateral){
+						holder.scene.position.x = (posX+0.05)*wall_size;
+						holder.scene.position.z = (posZ+0.5)*wall_size;
+						holder.scene.position.y = wall_size*0.8;
+					}else{
+						holder.scene.position.z = (posZ+0.95)*wall_size;
+						holder.scene.position.x = (posX+0.5)*wall_size;
+						holder.scene.rotation.y += Math.PI / 2;
+						holder.scene.position.y = wall_size*0.8;
+					}
+
+					torchesHolders.push(holder.scene);
+
+					scene.add(holder.scene);
+
 					let fireSound = new THREE.PositionalAudio(listener);
 					let fireElement = document.getElementById('fire');
 					fireSound.setMediaElementSource(fireElement);
@@ -283,16 +314,6 @@
 
 					let analyzer = new THREE.AudioAnalyser(fireSound,32);
 					torchesAnalysers.push(analyzer);
-
-					holder.scene.scale.set(wall_size*0.2, wall_size*0.2, wall_size*0.2);
-					holder.scene.position.x = (posX+0.05)*wall_size;
-					holder.scene.position.z = (posZ+0.5)*wall_size;
-					//gltf2.scene.rotation.y += Math.PI / 2;
-					holder.scene.position.y = wall_size*0.8;
-
-					torchesHolders.push(holder.scene);
-
-					scene.add(holder.scene);
 
 					roughnessMipmapper2.dispose();
 
@@ -308,19 +329,136 @@
 					});
 
 					fire.scene.scale.set(wall_size*0.4, wall_size*0.4, wall_size*0.4);
-					fire.scene.position.x = (posX-1)*wall_size;
-					fire.scene.position.z = (posZ-0.2)*wall_size;
-					//gltf2.scene.rotation.y += Math.PI / 2;
-					fire.scene.position.y = wall_size*0.85;
+					if(!lateral){
+						fire.scene.position.x = (posX-1)*wall_size;
+						fire.scene.position.z = (posZ-0.2)*wall_size;
+						fire.scene.position.y = wall_size*0.85;
+					}else{
+						fire.scene.position.z = (posZ+0.2)*wall_size;
+						fire.scene.position.x = (posX-0.6)*wall_size;
+						fire.scene.position.y = wall_size*0.85;
+					}
 
 					scene.add(fire.scene);
 					torchesFire.push(fire.scene);
 					roughnessMipmapper2.dispose();
 				});
 				let torchLight = new THREE.SpotLight(0xFF5555, 2);
-				torchLight.position.x = (posX+1.5)*wall_size;
-				torchLight.position.y = wall_size*0.85;
-				torchLight.position.z = (posZ+0.5)*wall_size;
+				if(!lateral){
+					torchLight.position.x = (posX+1.5)*wall_size;
+					torchLight.position.y = wall_size*0.85;
+					torchLight.position.z = (posZ+0.5)*wall_size;
+				}else{
+					torchLight.position.x = (posX+1.7)*wall_size;
+					torchLight.position.y = wall_size*0.85;
+					torchLight.position.z = (posZ+1.5)*wall_size;
+				}
+
+				torchLight.angle = Math.PI / 4;
+				torchLight.penumbra = 0.4;
+				torchLight.decay = 2;
+				torchLight.distance = 1500;
+
+				torchLight.castShadow = true;
+				torchLight.shadow.mapSize.width = 1024;
+				torchLight.shadow.mapSize.height = 1024;
+				torchLight.shadow.camera.near = 10;
+				torchLight.shadow.camera.far = 200;
+				torchLight.shadow.focus = 1;
+				scene.add(torchLight);
+				torchesLights.push(torchLight);
+			}
+
+			function buildTriggeringTorches(posX, posZ, lateral){
+				const roughnessMipmapper2 = new RoughnessMipmapper(renderer);
+
+				const torchLoader = new GLTFLoader().setPath('./models/torch/');
+
+				torchLoader.load('scene.gltf', function (holder) {
+
+					holder.scene.traverse(function (child) {
+
+						if (child.isMesh) {
+							roughnessMipmapper2.generateMipmaps(child.material);
+							child.castShadow = true;
+							child.receiveShadow = true;
+						}
+					});
+
+					holder.scene.scale.set(wall_size*0.2, wall_size*0.2, wall_size*0.2);
+					if(!lateral){
+						holder.scene.position.x = (posX+0.05)*wall_size;
+						holder.scene.position.z = (posZ+0.5)*wall_size;
+						holder.scene.position.y = wall_size*0.8;
+					}else{
+						holder.scene.position.z = (posZ+0.95)*wall_size;
+						holder.scene.position.x = (posX+0.5)*wall_size;
+						holder.scene.rotation.y += Math.PI / 2;
+						holder.scene.position.y = wall_size*0.8;
+					}
+
+					torchesHolders.push(holder.scene);
+
+					scene.add(holder.scene);
+
+					roughnessMipmapper2.dispose();
+
+				});
+			}
+
+			function triggerTorches(posX, posZ, lateral){
+				const roughnessMipmapper2 = new RoughnessMipmapper(renderer);
+
+				const fireLoader = new GLTFLoader().setPath('./models/fire/');
+
+				fireLoader.load('scene.gltf', function(fire){
+					fire.scene.traverse(function (child) {
+
+						if (child.isMesh) {
+							roughnessMipmapper2.generateMipmaps(child.material);
+							child.castShadow = true;
+							child.receiveShadow = true;
+						}
+					});
+
+					fire.scene.scale.set(wall_size*0.4, wall_size*0.4, wall_size*0.4);
+					if(!lateral){
+						fire.scene.position.x = (posX-1)*wall_size;
+						fire.scene.position.z = (posZ-0.2)*wall_size;
+						fire.scene.position.y = wall_size*0.85;
+					}else {
+						fire.scene.position.z = (posZ + 0.2) * wall_size;
+						fire.scene.position.x = (posX - 0.6) * wall_size;
+						fire.scene.position.y = wall_size * 0.85;
+					}
+
+					let fireSound = new THREE.PositionalAudio(listener);
+					let fireElement = document.getElementById('fire');
+					fireSound.setMediaElementSource(fireElement);
+					fireSound.setRefDistance(wall_size*0.09);
+					fire.scene.add(fireSound);
+					fireElement.play();
+					fireElement.loop = true;
+					torchesAudio.push(fireSound);
+
+					let analyzer = new THREE.AudioAnalyser(fireSound,32);
+					torchesAnalysers.push(analyzer);
+
+					scene.add(fire.scene);
+					torchesFire.push(fire.scene);
+					roughnessMipmapper2.dispose();
+				});
+				let torchLight = new THREE.SpotLight(0xFF5555, 2);
+				if(!lateral){
+					torchLight.position.x = (posX+1.5)*wall_size;
+					torchLight.position.y = wall_size*0.85;
+					torchLight.position.z = (posZ+0.5)*wall_size;
+				}else{
+					torchLight.position.x = (posX+1.7)*wall_size;
+					torchLight.position.y = wall_size*0.85;
+					torchLight.position.z = (posZ+1.5)*wall_size;
+				}
+
 				torchLight.angle = Math.PI / 4;
 				torchLight.penumbra = 0.4;
 				torchLight.decay = 2;
