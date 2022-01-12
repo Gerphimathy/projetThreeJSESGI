@@ -30,6 +30,7 @@
 			let lightVariation = 1;
 			let walls = [];
 			let spookyRunner = [];
+			let screamerElems = [];
 
 			let openingDoor = [];
 
@@ -91,6 +92,7 @@
 				generateSpooks();
 				generateBonjour();
 				generateHanged();
+				prepareScreamers();
 			}
 
 			function onWindowResize() {
@@ -170,6 +172,21 @@
 						triggerTorches(layout.torchesOff.locations[i][0],layout.torchesOff.locations[i][1], false);
 					}
 				}
+
+				for (let i = 0; i < layout.screamers.length; i++){
+					let screamer = layout.screamers[i];
+					if(!screamer.toggled && screamer.timer===0
+							&& camera.position.x>=screamer.trigger[0]*wall_size && camera.position.x<(screamer.trigger[0]+1)*wall_size
+							&& camera.position.z>=screamer.trigger[1]*wall_size && camera.position.z<(screamer.trigger[1]+1)*wall_size
+					){
+						screamerElems[i].position.y = screamer.surface[1]*wall_size/2;
+						screamer.timer++;
+						screamer.toggled = true;
+					}
+					if (screamer.toggled && screamer.timer!==screamer.lingering) screamer.timer++;
+					if (screamer.toggled && screamer.timer===screamer.lingering) screamerElems[i].position.y = -3 * wall_size * wall_size * screamer.surface[1];
+				}
+
                 stats.end();
 			}
 
@@ -182,6 +199,63 @@
                 controls.maxPolarAngle = 85 * Math.PI / 180;
             }
 */
+			function prepareScreamers() {
+				for (let i = 0; i < layout.screamers.length; i++) {
+					let screamer = layout.screamers[i];
+					let matArray = [];
+					matArray.push(new THREE.MeshBasicMaterial({
+						map: THREE.ImageUtils.loadTexture('./textures/screamers/' + screamer.path),
+						transparent: true,
+						opacity: 1,
+						color: 0xFF0000
+					}));
+					matArray.push(new THREE.MeshBasicMaterial({
+						map: THREE.ImageUtils.loadTexture('./textures/screamers/' + screamer.path),
+						transparent: true,
+						opacity: 1,
+						color: 0xFF0000
+					}));
+					matArray.push(new THREE.MeshBasicMaterial({
+						map: THREE.ImageUtils.loadTexture('./textures/screamers/' + screamer.path),
+						transparent: true,
+						opacity: 1,
+						color: 0xFF0000
+					}));
+					matArray.push(new THREE.MeshBasicMaterial({
+						map: THREE.ImageUtils.loadTexture('./textures/screamers/' + screamer.path),
+						transparent: true,
+						opacity: 1,
+						color: 0xFF0000
+					}));
+					matArray.push(new THREE.MeshBasicMaterial({
+						map: THREE.ImageUtils.loadTexture('./textures/screamers/' + screamer.path),
+						transparent: true,
+						opacity: 1,
+						color: 0xFF0000
+					}));
+					matArray.push(new THREE.MeshBasicMaterial({
+						map: THREE.ImageUtils.loadTexture('./textures/screamers/' + screamer.path),
+						transparent: true,
+						opacity: 1,
+						color: 0xFF0000
+					}));
+
+					const screamerMat = new THREE.MeshFaceMaterial(matArray);
+
+					const screamerGeo = new THREE.BoxGeometry(wall_size * screamer.surface[0], wall_size * screamer.surface[1], wall_size * screamer.surface[2]);
+
+					let spook = new THREE.Mesh(screamerGeo, screamerMat);
+					spook.position.x = (screamer.location[0] + 0.5) * wall_size;
+					spook.position.y = -3 * wall_size * wall_size * screamer.surface[1];
+					spook.position.z = (screamer.location[1] + 0.5) * wall_size;
+
+					scene.add(spook);
+
+					screamerElems.push(spook);
+				}
+			}
+
+
 			function checkProximity(preMovePosition){
 				for (let x = -1; x <= 1; x++){
 					for (let z = -1; z <= 1; z++){
@@ -193,6 +267,7 @@
 					}
 				}
 			}
+
 			function generateCamera(){
                 camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 5000 );
 
