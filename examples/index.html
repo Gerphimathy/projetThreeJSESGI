@@ -240,7 +240,6 @@
                     }
                 }
 
-				//TODO: Remplacer avec une texture de porte superimposé au bloc
 				const door_text = new THREE.TextureLoader().load('./textures/gate.png');
 				const door_material = new THREE.MeshPhongMaterial({map:door_text});
 				const door_geometry = new THREE.BoxGeometry(wall_size,wall_size,wall_size*0.1);
