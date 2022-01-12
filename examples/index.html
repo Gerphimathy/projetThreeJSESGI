@@ -50,6 +50,7 @@
             let devmod = true;
             let wall_size = 280; // Unit : cm
 			let ambient_light;
+            let mixer;
 			let torchesHolders = []; let torchesFire = []; let torchesLights = []; let torchesAnalysers = []; let torchesAudio = []; let torchesOn = false;
 			let activateLights = [];
 			let lightVariation = 1;
@@ -161,6 +162,7 @@
 				generateBonjour();
 				generateHanged();
 				prepareScreamers();
+                generateBreakdance();
                 buildGui();
 				const content = document.getElementById('content');
 				content.remove();
@@ -179,7 +181,8 @@
 			function animate() {
                 stats.begin();
                 const deltaTime = clock.getDelta();
-				//if (camera.position.y!==cameraHeight) camera.position.y = cameraHeight;
+                if (mixer) mixer.update(deltaTime); //update the GLTF model
+                helper.update(deltaTime);
 				let tempPos = [camera.position.x, camera.position.z];
                 doomControls.update(deltaTime);
 				checkProximity(tempPos);
@@ -1096,6 +1099,39 @@
 
                 gui.open();
             }
+
+            function generateBreakdance(){
+
+                const roughnessMipmapper = new RoughnessMipmapper(renderer);
+                const skeletonLoader = new GLTFLoader();
+                skeletonLoader.load('./models/skeleton/skeleton.gltf', function (skeleton) { //TODO : Add the model
+
+
+                    mixer = new THREE.AnimationMixer(skeleton.scene);
+                    skeleton.animations.forEach((clip) => {
+                        mixer.clipAction(clip).play();
+                    });
+
+                    skeleton.scene.traverse(function (child) {
+
+                        if (child.isMesh) {
+                            roughnessMipmapper.generateMipmaps(child.material);
+                            child.castShadow = true;
+                            child.receiveShadow = true;
+                        }
+                    });
+
+                    skeleton.scene.position.x = ( layout.position[0] + 0.5 ) * wall_size;
+                    skeleton.scene.position.y = -1;
+                    skeleton.scene.position.z = ( layout.position[0] + 0.5 ) * wall_size;
+                    //skeleton.scene.rotation.y -= Math.PI / 2;
+                    skeleton.scene.scale.set(60, 60, 60);
+
+					scene.add(skeleton.scene)
+
+                    roughnessMipmapper.dispose();
+
+                }
 
 
 		</script>

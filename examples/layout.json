@@ -79,5 +79,8 @@
 	"crumbling": {
 		"position": [5,7],
 		"trigger": [6,7]
+	},
+	"dancing_skeleton": {
+		"position": [12,12]
 	}
 }
