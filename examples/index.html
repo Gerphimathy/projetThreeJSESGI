@@ -83,6 +83,7 @@
                 generateLabyrinth();
                 generateLights();
 				generateSpooks();
+				generateBonjour();
 			}
 
 			function onWindowResize() {
@@ -369,6 +370,25 @@
 
 				scene.add(spook);
 
+			}
+
+			function generateBonjour(){
+				const bonjour_geometry = new THREE.BoxGeometry( 1, wall_size/3, wall_size/2.5 );
+				var bonjour_material_array = [];
+				bonjour_material_array.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( './textures/sign.png' ), transparent: true, opacity: 1, color: 0xFF0000 }));
+				bonjour_material_array.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( './textures/sign.png' ), transparent: true, opacity: 1, color: 0xFF0000 }));
+				bonjour_material_array.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( './textures/sign.png' ), transparent: true, opacity: 1, color: 0xFF0000 }));
+				bonjour_material_array.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( './textures/sign.png' ), transparent: true, opacity: 1, color: 0xFF0000 }));
+				bonjour_material_array.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( './textures/sign.png' ), transparent: true, opacity: 1, color: 0xFF0000 }));
+				bonjour_material_array.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( './textures/sign.png' ), transparent: true, opacity: 1, color: 0xFF0000 }));
+				const bonjour_material = new THREE.MeshFaceMaterial(bonjour_material_array);
+				const bonjour = new THREE.Mesh( bonjour_geometry, bonjour_material );
+
+				bonjour.position.x = layout.start[0]*wall_size+wall_size;
+				bonjour.position.y = cameraHeight-20;
+				bonjour.position.z = layout.start[1]*(wall_size)-1.5*wall_size;
+
+				scene.add( bonjour );
 			}
 
 		</script>
