@@ -34,6 +34,7 @@
             let gui;
             const clock = new THREE.Clock();
             let enable_screamer = true;
+            let devmod = true;
             let wall_size = 280; // Unit : cm
 			let ambient_light;
 			let torchesHolders = []; let torchesFire = []; let torchesLights = []; let torchesAnalysers = []; let torchesAudio = []; let torchesOn = false;
@@ -1026,7 +1027,8 @@
 	                'fog far': scene.fog.far,
 	                'light intensity':ambient_light.intensity,
 	                'light color': ambient_light.color,
-	                'enable screamer': enable_screamer
+	                'enable screamer': enable_screamer,
+	                'devmod':devmod
                 };
 
                 let controls = gui.addFolder('Controls');
@@ -1065,6 +1067,14 @@
                 preferences.add(params, 'enable screamer').onChange(function(val){
                     enable_screamer = val;
                 })
+
+	            preferences.add(params, 'devmod').onChange(function(val){
+                    devmod = val;
+                    doomControls.canFly = val;
+                    doomControls.canLookUpDown = val;
+                    doomControls.canBarrelroll = val;
+
+	            })
 
                 gui.open();
             }
