@@ -89,3 +89,48 @@ a, button, input, select {
 	margin-top: 20px;
 	padding: 10px;
 }
+
+/* Style the video: 100% width and height to cover the entire window */
+#myVideo {
+	position: fixed;
+	right: 0;
+	bottom: 0;
+	min-width: 100%;
+	min-height: 100%;
+}
+
+#myBtn {
+	width: 200px;
+	font-size: 18px;
+	padding: 10px;
+	border: none;
+	background: #000;
+	color: #fff;
+	cursor: pointer;
+}
+
+#myBtn:hover {
+	background: #ddd;
+	color: black;
+}
+
+.content {
+	position: fixed;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.5);
+	color: #f1f1f1;
+	width: 100%;
+	padding: 20px;
+}
+
+.divButton{
+	position: absolute;
+	top: 0px;
+	left: 0px;
+
+
+
+	background-color: red;
+	height: 100%;
+	width: 100%;
+}

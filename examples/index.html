@@ -12,6 +12,19 @@
 	<audio id="door" preload="auto" style="display: none">
 		<source src="son/porte.mp3" type="audio/mpeg">
 	</audio>
+
+
+		<div id="content" class="content">
+			<video autoplay loop id="myVideo">
+				<source src="./videos/maze.mp4" type="video/mp4">
+			</video>
+			<!-- Use a button to pause/play the video with JavaScript -->
+
+
+
+		</div>
+
+
 	<body>
 		<div id="container"></div>
 		<script src="js/libs/ammo.wasm.js"></script> <!-- Ammo -->
@@ -82,9 +95,10 @@
 
             const impactPoint = new THREE.Vector3();
             const impactNormal = new THREE.Vector3();
+			const myBtn = document.getElementById('content');
 
 
-            Ammo().then( function ( AmmoLib ) {
+			myBtn.addEventListener('click', () => {Ammo().then( function ( AmmoLib ) {
 
                 Ammo = AmmoLib;
 
@@ -92,7 +106,7 @@
                 init();
                 animate();
 
-            } );
+			})} );
 
 			function degrees_to_radians(degrees)
 			{
@@ -148,6 +162,9 @@
 				generateHanged();
 				prepareScreamers();
                 buildGui();
+				const content = document.getElementById('content');
+				content.remove();
+
 			}
 
 			function onWindowResize() {
