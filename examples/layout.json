@@ -54,6 +54,26 @@
 			"effect": "something.mp3",
 			"toggled": false,
 			"timer": 0
+		},
+		{
+			"trigger": [1,8],
+			"location": [1,9],
+			"lingering": 30,
+			"surface": [1,1,0.1],
+			"path": "giscard.png",
+			"effect": "OUAH.wav",
+			"toggled": false,
+			"timer": 0
+		},
+		{
+			"trigger": [7,10],
+			"location": [7,11],
+			"lingering": 30,
+			"surface": [1,1,0.1],
+			"path": "aled.png",
+			"effect": "nyah.wav",
+			"toggled": false,
+			"timer": 0
 		}
 	],
 	"crumbling": {
