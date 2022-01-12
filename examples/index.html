@@ -25,12 +25,15 @@
 			import {GLTFLoader} from "./jsm/loaders/GLTFLoader.js";
             import { ConvexObjectBreaker } from './jsm/misc/ConvexObjectBreaker.js';
 //            import { ConvexGeometry } from './jsm/geometries/ConvexGeometry.js';
+            import { GUI } from './jsm/libs/lil-gui.module.min.js';
 
 			let camera, scene, renderer;
 			let layout;
             let doomControls;
             let stats;
+            let gui;
             const clock = new THREE.Clock();
+            let enable_screamer = true;
             let wall_size = 280; // Unit : cm
 			let ambient_light;
 			let torchesHolders = []; let torchesFire = []; let torchesLights = []; let torchesAnalysers = []; let torchesAudio = []; let torchesOn = false;
@@ -142,6 +145,7 @@
 				generateBonjour();
 				generateHanged();
 				prepareScreamers();
+                buildGui();
 			}
 
 			function onWindowResize() {
@@ -232,6 +236,7 @@
 					}
 				}
 
+                if(enable_screamer)
 				for (let i = 0; i < layout.screamers.length; i++){
 					let screamer = layout.screamers[i];
 					if(!screamer.toggled && screamer.timer===0
@@ -1007,6 +1012,61 @@
 
                 numObjectsToRemove = 0;
 
+            }
+
+
+            function buildGui() {
+
+                gui = new GUI();
+
+                const params = {
+                    'move speed': doomControls.moveSpeed,
+                    'rotation speed': doomControls.rotateSpeed,
+	                'fog color': scene.fog.color,
+	                'fog far': scene.fog.far,
+	                'light intensity':ambient_light.intensity,
+	                'light color': ambient_light.color,
+	                'enable screamer': enable_screamer
+                };
+
+                let controls = gui.addFolder('Controls');
+
+                controls.add( params, 'move speed', 300, 550).onChange(function (val) {
+                    doomControls.moveSpeed = val;
+                })
+
+	            controls.add( params, 'rotation speed', Math.PI/2, Math.PI*1.5).onChange(function (val){
+                    doomControls.rotateSpeed = val;
+	            })
+
+	            let fog = gui.addFolder('Fog');
+
+                fog.addColor(params, 'fog color' ).onChange(function(val){
+                    scene.fog.color = val;
+                })
+
+
+	            fog.add(params, 'fog far', wall_size*2, wall_size*10).onChange(function(val){
+                    scene.fog.far = val;
+	            })
+
+	            let light = gui.addFolder('light');
+
+                light.addColor(params, 'light color').onChange(function(val){
+                    ambient_light.color = val;
+                })
+
+	            light.add(params, 'light intensity',0,1).onChange(function(val){
+                    ambient_light.intensity = val;
+	            })
+
+	            let preferences = gui.addFolder('preferences');
+
+                preferences.add(params, 'enable screamer').onChange(function(val){
+                    enable_screamer = val;
+                })
+
+                gui.open();
             }
 
 
