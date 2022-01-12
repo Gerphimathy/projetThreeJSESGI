@@ -958,11 +958,11 @@
 
                     // Subdivision
 
-                    const fractureImpulse = 250;
+                    const fractureImpulse = 550;
 
                     if ( breakable0 && ! collided0 && maxImpulse > fractureImpulse ) {
 
-                        const debris = convexBreaker.subdivideByImpact( threeObject0, impactPoint, impactNormal, 1, 2, 1.5 );
+                        const debris = convexBreaker.subdivideByImpact( threeObject0, impactPoint, impactNormal, 1, 1.5, 1 );
 
                         const numObjects = debris.length;
                         for ( let j = 0; j < numObjects; j ++ ) {
