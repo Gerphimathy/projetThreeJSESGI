@@ -42,6 +42,12 @@
 			init();
 			animate();
 
+			function degrees_to_radians(degrees)
+			{
+			  var pi = Math.PI;
+			  return degrees * (pi/180);
+			}
+
 			function readJson(file) {
 				var jObject;
 				var req = new XMLHttpRequest();
@@ -84,6 +90,7 @@
                 generateLights();
 				generateSpooks();
 				generateBonjour();
+				generateHanged();
 			}
 
 			function onWindowResize() {
@@ -223,7 +230,7 @@
                 }
 
 				//TODO: Remplacer avec une texture de porte superimposé au bloc
-				const door_text = new THREE.TextureLoader().load('./textures/crying_obsidian.png');
+				const door_text = new THREE.TextureLoader().load('./textures/gate.png');
 				const door_material = new THREE.MeshPhongMaterial({map:door_text});
 				const door_geometry = new THREE.BoxGeometry(wall_size,wall_size,wall_size*0.1);
 				let door = new THREE.Mesh(door_geometry, door_material);
@@ -384,11 +391,35 @@
 				const bonjour_material = new THREE.MeshFaceMaterial(bonjour_material_array);
 				const bonjour = new THREE.Mesh( bonjour_geometry, bonjour_material );
 
-				bonjour.position.x = layout.start[0]*wall_size+wall_size;
+				bonjour.position.x = layout.start[0]*wall_size + wall_size;
 				bonjour.position.y = cameraHeight-20;
-				bonjour.position.z = layout.start[1]*(wall_size)-1.5*wall_size;
+				bonjour.position.z = layout.start[1]*(wall_size) - 1.5*wall_size;
 
 				scene.add( bonjour );
+			}
+
+			function generateHanged(){
+				const hangedLoader = new GLTFLoader().setPath('./models/hanged/');
+
+				hangedLoader.load('scene.gltf', function(hanged){
+					hanged.scene.traverse(function (child) {
+
+						if (child.isMesh) {
+							//roughnessMipmapper2.generateMipmaps(child.material);
+							child.castShadow = true;
+							child.receiveShadow = true;
+						}
+					});
+
+					hanged.scene.scale.set(wall_size*0.7, wall_size*0.7, wall_size*0.7);
+					hanged.scene.position.x = layout.start[0]*wall_size + 11.5*wall_size;
+					hanged.scene.position.y = cameraHeight-170;
+					hanged.scene.position.z = layout.start[1]*(wall_size) + 4.5*wall_size;
+					hanged.scene.rotation.y = degrees_to_radians(-180);
+
+					scene.add(hanged.scene);
+					//roughnessMipmapper2.dispose();
+				});
 			}
 
 		</script>
