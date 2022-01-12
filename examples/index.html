@@ -21,7 +21,7 @@
 			import {RoughnessMipmapper} from "./jsm/utils/RoughnessMipmapper.js";
 			import {GLTFLoader} from "./jsm/loaders/GLTFLoader.js";
             import { ConvexObjectBreaker } from './jsm/misc/ConvexObjectBreaker.js';
-            import { ConvexGeometry } from './jsm/geometries/ConvexGeometry.js';
+//            import { ConvexGeometry } from './jsm/geometries/ConvexGeometry.js';
 
 			let camera, scene, renderer;
 			let layout;
@@ -61,6 +61,19 @@
             let transformAux1;
             let tempBtVec3_1;
 
+            const objectsToRemove = [];
+
+            for ( let i = 0; i < 500; i ++ ) {
+
+                objectsToRemove[ i ] = null;
+
+            }
+
+            let numObjectsToRemove = 0;
+
+            const impactPoint = new THREE.Vector3();
+            const impactNormal = new THREE.Vector3();
+
 
             Ammo().then( function ( AmmoLib ) {
 
@@ -74,13 +87,13 @@
 
 			function degrees_to_radians(degrees)
 			{
-			  var pi = Math.PI;
+			  let pi = Math.PI;
 			  return degrees * (pi/180);
 			}
 
 			function readJson(file) {
-				var jObject;
-				var req = new XMLHttpRequest();
+				let jObject;
+				let req = new XMLHttpRequest();
 				req.open("GET", "./layout.json", false);
 				req.onreadystatechange = function () {
 					if (req.readyState === 4) {
@@ -142,7 +155,6 @@
 				let tempPos = [camera.position.x, camera.position.z];
                 doomControls.update(deltaTime);
 				checkProximity(tempPos);
-				renderer.render( scene, camera );
 				lightVariation *= -1;
 
 				for (let i = 0; i < torchesAnalysers.length; i++) {
@@ -204,6 +216,9 @@
 						triggerTorches(layout.torchesOff.locations[i][0],layout.torchesOff.locations[i][1], false);
 					}
 				}
+
+                updatePhysics(deltaTime);
+                renderer.render( scene, camera );
                 stats.end();
 			}
 
@@ -234,7 +249,7 @@
             }
 
 
-                function checkProximity(preMovePosition){
+			function checkProximity(preMovePosition){
 				for (let x = -1; x <= 1; x++){
 					for (let z = -1; z <= 1; z++){
 						let ray = new THREE.Raycaster(camera.position, new THREE.Vector3(x,0,z));
@@ -245,6 +260,7 @@
 					}
 				}
 			}
+
 			function generateCamera(){
                 camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 5000 );
 
@@ -267,7 +283,7 @@
                 ground.position.y = -25;
                 ground.position.z = wall_size*layout.width/2;
 
-                const shape = new Ammo.btBoxShape( new Ammo.btVector3( wall_size*layout.height/2, 25, wall_size*layout.width/2 ) );
+                const shape = new Ammo.btBoxShape( new Ammo.btVector3( wall_size*layout.height/2, 25-margin, wall_size*layout.width/2 ) );
 
                 createRigidBody( ground, shape, 0, 0, 0 );
 
@@ -289,8 +305,9 @@
                             wall.position.y = wall_size/2;
                             wall.position.z = (i+.5)*wall_size;
                             layout.layout[i][j] = wall;
-                            scene.add(layout.layout[i][j]);
 							walls.push(wall);
+                            const shape = new Ammo.btBoxShape( new Ammo.btVector3( wall_size/2, wall_size/2, wall_size/2 ) );
+                            createRigidBody( wall, shape, 0, 0, 0 );
 
                         }
                     }
@@ -631,9 +648,12 @@
                         slab.position.y = wall_size + slab_size / 2;
                         slab.position.z = (i + .5) * wall_size;
 
-                        if(j==layout.crumbling.position[0] && i==layout.crumbling.position[1]) {
-                            convexBreaker.prepareBreakableObject(slab, 500, new THREE.Vector3(), new THREE.Vector3(), true);
+                        if(j===layout.crumbling.position[0] && i===layout.crumbling.position[1]) {
+                            convexBreaker.prepareBreakableObject(slab, 3000, new THREE.Vector3(), new THREE.Vector3(), true);
                             createDebrisFromBreakableObject(slab);
+                        }else{
+                            const shape = new Ammo.btBoxShape( new Ammo.btVector3( wall_size/2-margin, slab_size/2, wall_size/2-margin ) );
+                            createRigidBody( slab, shape, 0, 0, 0 );
                         }
 
 	                    scene.add(slab);
@@ -753,6 +773,152 @@
 
             }
 
+
+            function updatePhysics( deltaTime ) {
+
+                // Step world
+                physicsWorld.stepSimulation( deltaTime, 1 );
+
+                // Update rigid bodies
+                for ( let i = 0, il = rigidBodies.length; i < il; i ++ ) {
+
+                    const objThree = rigidBodies[ i ];
+                    const objPhys = objThree.userData.physicsBody;
+                    const ms = objPhys.getMotionState();
+
+                    if ( ms ) {
+
+                        ms.getWorldTransform( transformAux1 );
+                        const p = transformAux1.getOrigin();
+                        const q = transformAux1.getRotation();
+                        objThree.position.set( p.x(), p.y(), p.z() );
+                        objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
+
+                        objThree.userData.collided = false;
+
+                    }
+
+                }
+
+                for ( let i = 0, il = dispatcher.getNumManifolds(); i < il; i ++ ) {
+
+                    const contactManifold = dispatcher.getManifoldByIndexInternal( i );
+                    const rb0 = Ammo.castObject( contactManifold.getBody0(), Ammo.btRigidBody );
+                    const rb1 = Ammo.castObject( contactManifold.getBody1(), Ammo.btRigidBody );
+
+                    const threeObject0 = Ammo.castObject( rb0.getUserPointer(), Ammo.btVector3 ).threeObject;
+                    const threeObject1 = Ammo.castObject( rb1.getUserPointer(), Ammo.btVector3 ).threeObject;
+
+                    if ( ! threeObject0 && ! threeObject1 ) {
+
+                        continue;
+
+                    }
+
+                    const userData0 = threeObject0 ? threeObject0.userData : null;
+                    const userData1 = threeObject1 ? threeObject1.userData : null;
+
+                    const breakable0 = userData0 ? userData0.breakable : false;
+                    const breakable1 = userData1 ? userData1.breakable : false;
+
+                    const collided0 = userData0 ? userData0.collided : false;
+                    const collided1 = userData1 ? userData1.collided : false;
+
+                    if ( ( ! breakable0 && ! breakable1 ) || ( collided0 && collided1 ) ) {
+
+                        continue;
+
+                    }
+
+                    let contact = false;
+                    let maxImpulse = 0;
+                    for ( let j = 0, jl = contactManifold.getNumContacts(); j < jl; j ++ ) {
+
+                        const contactPoint = contactManifold.getContactPoint( j );
+
+                        if ( contactPoint.getDistance() < 0 ) {
+
+                            contact = true;
+                            const impulse = contactPoint.getAppliedImpulse();
+
+                            if ( impulse > maxImpulse ) {
+
+                                maxImpulse = impulse;
+                                const pos = contactPoint.get_m_positionWorldOnB();
+                                const normal = contactPoint.get_m_normalWorldOnB();
+                                impactPoint.set( pos.x(), pos.y(), pos.z() );
+                                impactNormal.set( normal.x(), normal.y(), normal.z() );
+
+                            }
+
+                            break;
+
+                        }
+
+                    }
+
+                    // If no point has contact, abort
+                    if ( ! contact ) continue;
+
+                    // Subdivision
+
+                    const fractureImpulse = 250;
+
+                    if ( breakable0 && ! collided0 && maxImpulse > fractureImpulse ) {
+
+                        const debris = convexBreaker.subdivideByImpact( threeObject0, impactPoint, impactNormal, 1, 2, 1.5 );
+
+                        const numObjects = debris.length;
+                        for ( let j = 0; j < numObjects; j ++ ) {
+
+                            const vel = rb0.getLinearVelocity();
+                            const angVel = rb0.getAngularVelocity();
+                            const fragment = debris[ j ];
+                            fragment.userData.velocity.set( vel.x(), vel.y(), vel.z() );
+                            fragment.userData.angularVelocity.set( angVel.x(), angVel.y(), angVel.z() );
+
+                            createDebrisFromBreakableObject( fragment );
+
+                        }
+
+                        objectsToRemove[ numObjectsToRemove ++ ] = threeObject0;
+                        userData0.collided = true;
+
+                    }
+
+                    if ( breakable1 && ! collided1 && maxImpulse > fractureImpulse ) {
+
+                        const debris = convexBreaker.subdivideByImpact( threeObject1, impactPoint, impactNormal, 1, 2, 1.5 );
+
+                        const numObjects = debris.length;
+                        for ( let j = 0; j < numObjects; j ++ ) {
+
+                            const vel = rb1.getLinearVelocity();
+                            const angVel = rb1.getAngularVelocity();
+                            const fragment = debris[ j ];
+                            fragment.userData.velocity.set( vel.x(), vel.y(), vel.z() );
+                            fragment.userData.angularVelocity.set( angVel.x(), angVel.y(), angVel.z() );
+
+                            createDebrisFromBreakableObject( fragment );
+
+                        }
+
+                        objectsToRemove[ numObjectsToRemove ++ ] = threeObject1;
+                        userData1.collided = true;
+
+                    }
+
+                }
+
+                for ( let i = 0; i < numObjectsToRemove; i ++ ) {
+
+                    removeDebris( objectsToRemove[ i ] );
+
+                }
+
+                numObjectsToRemove = 0;
+
+            }
 
 
 		</script>
