@@ -9,6 +9,9 @@
 	<audio id="fire" preload="auto" style="display: none">
 		<source src="son/feu.mp3" type="audio/mpeg">
 	</audio>
+	<audio id="door" preload="auto" style="display: none">
+		<source src="son/porte.mp3" type="audio/mpeg">
+	</audio>
 	<body>
 		<div id="container"></div>
 		<script type="module">
@@ -159,6 +162,16 @@
 					let change = (layout.door.angle*(Math.PI/180))/layout.door.time;
 
 					openingDoor["pivot"].rotateY(change);
+
+					let doorElem = document.getElementById('door');
+					let doorSound = new THREE.PositionalAudio(listener);
+					doorSound.setMediaElementSource(doorElem);
+					doorSound.setRefDistance(wall_size*0.09);
+
+					openingDoor["elem"].add(doorSound);
+					doorElem.loop = false;
+					doorElem.play();
+
 
 					openingDoor["frame"]++;
 				}
