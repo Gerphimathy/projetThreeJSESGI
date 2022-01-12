@@ -9,6 +9,9 @@
 	<audio id="fire" preload="auto" style="display: none">
 		<source src="son/feu.mp3" type="audio/mpeg">
 	</audio>
+	<audio id="door" preload="auto" style="display: none">
+		<source src="son/porte.mp3" type="audio/mpeg">
+	</audio>
 	<body>
 		<div id="container"></div>
 		<script src="js/libs/ammo.wasm.js"></script> <!-- Ammo -->
@@ -206,6 +209,16 @@
 
 					openingDoor["pivot"].rotateY(change);
 
+					let doorElem = document.getElementById('door');
+					let doorSound = new THREE.PositionalAudio(listener);
+					doorSound.setMediaElementSource(doorElem);
+					doorSound.setRefDistance(wall_size*0.09);
+
+					openingDoor["elem"].add(doorSound);
+					doorElem.loop = false;
+					doorElem.play();
+
+
 					openingDoor["frame"]++;
 				}
 
@@ -228,6 +241,8 @@
 						screamerElems[i].position.y = screamer.surface[1]*wall_size/2;
 						screamer.timer++;
 						screamer.toggled = true;
+						let effect = new Audio("./son/screamers/"+screamer.effect);
+						effect.play();
 					}
 					if (screamer.toggled && screamer.timer!==screamer.lingering) screamer.timer++;
 					if (screamer.toggled && screamer.timer===screamer.lingering) screamerElems[i].position.y = -3 * wall_size * wall_size * screamer.surface[1];
