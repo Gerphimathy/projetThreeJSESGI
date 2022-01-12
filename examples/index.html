@@ -358,7 +358,7 @@
 			function generateCamera(){
                 camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 5000 );
 
-                camera.position.x = layout.start[0]*wall_size-2*wall_size;
+                camera.position.x = layout.start[0]*wall_size+0.5*wall_size;
                 camera.position.y = cameraHeight;
                 camera.position.z = layout.start[1]*(wall_size)+0.5*wall_size;
 
@@ -1039,7 +1039,7 @@
                     doomControls.moveSpeed = val;
                 })
 
-	            controls.add( params, 'rotation speed', Math.PI/2, Math.PI*1.5).onChange(function (val){
+	            controls.add( params, 'rotation speed', Math.PI/4, Math.PI*1.5).onChange(function (val){
                     doomControls.rotateSpeed = val;
 	            })
 
